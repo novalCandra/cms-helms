@@ -16,6 +16,7 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 export default function FormAuth() {
   const navigate = useRouter();
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -92,11 +93,22 @@ export default function FormAuth() {
                   }}
                 />
 
+                <div className="text-end text-sm text-sky-500">
+                  <Link href={"/auth/forgotpassword"}>Forgot password</Link>
+                </div>
                 <div className="flex justify-center items-center">
                   <Button className="w-80">Login</Button>
                 </div>
               </form>
             </Form>
+            <div className="d-flex mt-2 text-center">
+              <p>
+                Already to{" "}
+                <Link className="text-sky-500" href={"/auth/register"}>
+                  Account
+                </Link>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
