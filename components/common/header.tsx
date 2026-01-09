@@ -14,7 +14,6 @@ export default function Header() {
             <span className="text-xl font-bold text-foreground">HelmetHub</span>
           </div>
           <div className="flex items-center gap-3">
-            {/* <Link to={"/login"}> */}
             <Link href={"/auth/login"}>
               <Button
                 variant={"outline"}
@@ -24,7 +23,7 @@ export default function Header() {
                 Login
               </Button>
             </Link>
-            <Link href={"/register"}>
+            <Link href={"/auth/register"}>
               <Button variant={"default"} className="cursor-pointer rounded-xs">
                 Get Started
               </Button>
