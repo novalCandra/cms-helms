@@ -8,13 +8,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { HardHat } from "lucide-react";
+import { HardHat, Lock, MailIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import FormSchema from "../schema/schemaLogin";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 export default function FormAuth() {
@@ -64,6 +68,9 @@ export default function FormAuth() {
                               placeholder="Enter Your Email"
                               {...field}
                             />
+                            <InputGroupAddon>
+                              <MailIcon />
+                            </InputGroupAddon>
                           </InputGroup>
                         </FormControl>
                         <FormMessage />
@@ -85,6 +92,9 @@ export default function FormAuth() {
                               placeholder="********"
                               {...field}
                             />
+                            <InputGroupAddon>
+                              <Lock />
+                            </InputGroupAddon>
                           </InputGroup>
                         </FormControl>
                         <FormMessage />
