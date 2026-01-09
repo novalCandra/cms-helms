@@ -240,11 +240,13 @@ export default function Page() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableHead>Borrow ID</TableHead>
-                    <TableHead>Helmet ID</TableHead>
-                    <TableHead>Borrow Date</TableHead>
-                    <TableHead>Return Date</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableRow>
+                      <TableHead>Borrow ID</TableHead>
+                      <TableHead>Helmet ID</TableHead>
+                      <TableHead>Borrow Date</TableHead>
+                      <TableHead>Return Date</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
                   </TableHeader>
 
                   <TableBody>
