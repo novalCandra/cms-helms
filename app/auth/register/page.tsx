@@ -22,6 +22,7 @@ import z from "zod";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
+import Navbar from "@/components/common/Navbar";
 export default function Page() {
   const navigate = useRouter();
   const form = useForm<z.infer<typeof FormSchemaRegister>>({
@@ -41,7 +42,6 @@ export default function Page() {
   }
   return (
     <>
-      {/* <Navbar /> */}
       <div className="flex min-h-screen justify-center items-center">
         <div className="w-full max-w-md">
           {/* logo */}

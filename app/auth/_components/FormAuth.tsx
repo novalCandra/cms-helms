@@ -33,7 +33,7 @@ export default function FormAuth() {
 
   async function onSubmit() {
     console.log("check");
-    navigate.push("/");
+    navigate.push("/users/home");
   }
   return (
     <>
