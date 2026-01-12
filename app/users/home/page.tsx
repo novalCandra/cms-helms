@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlarmClock, Calendar, HardHat, Undo2 } from "lucide-react";
+import { AlarmClock, Calendar, HardHat, Undo2, Wallet } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import dataDumyTable from "../data/dataDumy";
@@ -109,6 +109,30 @@ export default function Page() {
             </Card>
             {/* end borrows */}
             {/* borrows */}
+            <Card className="border-0 shadow-md lg:w-72 md:w-40">
+              <CardHeader className="-pb-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Spent
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-green-200 py-2 px-2 rounded-sm">
+                      <Wallet className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">Rp 225.000</p>
+                      <p className="text-base text-foreground">Total Spent</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            {/* end borrows */}
+
+
+            {/* Quick Action */}
             <Card className="border-0 shadow-md lg:w-96 md:w-40">
               <CardHeader className="-pb-4">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -208,6 +232,7 @@ export default function Page() {
                       <TableHead>Type</TableHead>
                       <TableHead>Size</TableHead>
                       <TableHead>Condition</TableHead>
+                      <TableHead>Price/Day</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -218,6 +243,9 @@ export default function Page() {
                         <TableCell>{item.type}</TableCell>
                         <TableCell>{item.size}</TableCell>
                         <TableCell>{item.condition}</TableCell>
+                        <TableCell className="text-blue-400">
+                          {item.price}
+                        </TableCell>
                         <TableCell>{item.status}</TableCell>
                       </TableRow>
                     ))}
@@ -245,6 +273,7 @@ export default function Page() {
                       <TableHead>Helmet ID</TableHead>
                       <TableHead>Borrow Date</TableHead>
                       <TableHead>Return Date</TableHead>
+                      <TableHead>Payment ID</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -256,6 +285,7 @@ export default function Page() {
                         <TableCell>{item.helment_id}</TableCell>
                         <TableCell>{item.boorow_date}</TableCell>
                         <TableCell>{item.return_date}</TableCell>
+                        <TableCell>{item.paymentId}</TableCell>
                         <TableCell>{item.status}</TableCell>
                       </TableRow>
                     ))}

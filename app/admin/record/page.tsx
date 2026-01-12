@@ -10,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import React from "react";
 import ConfigSidebar from "../config/configSidebar";
 import Navbar from "../components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
