@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Eye, HardHat, Lock, Mail, Phone, User, Users } from "lucide-react";
+import { Eye, HardHat, Lock, Mail, Phone, User } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Form,
@@ -22,7 +22,6 @@ import z from "zod";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
-import Navbar from "@/components/common/Navbar";
 export default function Page() {
   const navigate = useRouter();
   const form = useForm<z.infer<typeof FormSchemaRegister>>({
@@ -36,9 +35,27 @@ export default function Page() {
     },
   });
 
-  async function onSubmit() {
-    console.log("check");
-    navigate.push("/login");
+  async function onSubmit(values: z.infer<typeof FormSchemaRegister>) {
+    const resRegister = await fetch("", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
+
+    const data = await resRegister.json();
+
+    if (!data) {
+      alert("gagal register");
+      return;
+    }
+
+    await fetch("api/auth/set_token", {
+      method: "POST",
+      body: JSON.stringify({ token: data.token }),
+    });
+    navigate.push("/auth/login");
   }
   return (
     <>
@@ -65,7 +82,10 @@ export default function Page() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form className="space-y-5">
+                <form
+                  className="space-y-5"
+                  onSubmit={form.handleSubmit(onSubmit)}
+                >
                   <FormField
                     control={form.control}
                     name="full_name"

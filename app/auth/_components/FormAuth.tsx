@@ -31,9 +31,28 @@ export default function FormAuth() {
     },
   });
 
-  async function onSubmit() {
-    console.log("check");
-    navigate.push("/users/home");
+  async function OnSubmit(values: z.infer<typeof FormSchema>) {
+    const res = await fetch("", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
+
+    const data = await res.json();
+
+    if (!data) {
+      alert("Tidak bisa Login");
+      return;
+    }
+
+    await fetch("/api/auth/set_token", {
+      method: "POST",
+      body: JSON.stringify({ token: data.token }),
+    });
+
+    navigate.push("/user/home");
   }
   return (
     <>
@@ -53,7 +72,10 @@ export default function FormAuth() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form className="space-y-5">
+              <form
+                className="space-y-5"
+                onSubmit={form.handleSubmit(OnSubmit)}
+              >
                 <FormField
                   control={form.control}
                   name="email"
