@@ -5,6 +5,7 @@ type HistoryType = {
   boorow_date: string;
   return_date: string;
   status: string;
+  paymentId: string;
 };
 
 const HistoryData: HistoryType[] = [
@@ -14,6 +15,7 @@ const HistoryData: HistoryType[] = [
     helment_id: "HLM-003",
     boorow_date: "	2024-02-01",
     return_date: "2024-02-10",
+    paymentId: "PAY-001",
     status: "Borrowed",
   },
   {
@@ -22,6 +24,7 @@ const HistoryData: HistoryType[] = [
     helment_id: "HLM-003",
     boorow_date: "	2024-02-01",
     return_date: "2024-02-10",
+    paymentId: "PAY-001",
     status: "Borrowed",
   },
 ];

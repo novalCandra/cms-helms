@@ -5,6 +5,7 @@ type DataDumy = {
   size: string;
   condition: string;
   status: string;
+  price: string;
 };
 
 const dataDumyTable: DataDumy[] = [
@@ -13,6 +14,7 @@ const dataDumyTable: DataDumy[] = [
     helmedId: "HLM-001",
     type: "Standard",
     size: "M",
+    price: "Rp 15.000",
     condition: "Good",
     status: "Available",
   },
@@ -21,6 +23,7 @@ const dataDumyTable: DataDumy[] = [
     helmedId: "HLM-001",
     type: "Standard",
     size: "M",
+    price: "Rp 15.000",
     condition: "Good",
     status: "Borrowed",
   },
@@ -29,6 +32,7 @@ const dataDumyTable: DataDumy[] = [
     helmedId: "HLM-001",
     type: "Standard",
     size: "M",
+    price : "Rp 25.000",
     condition: "Good",
     status: "Maintenance",
   },
