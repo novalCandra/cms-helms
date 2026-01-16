@@ -20,8 +20,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClipboardPen, Plus } from "lucide-react";
+import { ToastContainer, toast } from "react-toastify";
 
 export default function Navbar() {
+  const notifySuccess = () =>
+    toast.success("Sucess Add Helments", {
+      theme: "colored",
+      position: "top-right",
+    });
+  const notifyFalse = () =>
+    toast.error("Faild to Add Helmentd ", {
+      theme: "colored",
+      position: "top-right",
+    });
   return (
     <nav className=" border-b-gray-500 top-0 z-50">
       <div className="container mx-auto flex px-10 py-4 items-center justify-between">
@@ -84,9 +95,12 @@ export default function Navbar() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button className="w-full">Assign Borrow</Button>
+                  <Button className="w-full" onClick={notifyFalse}>
+                    Assign Borrow
+                  </Button>
                 </DialogFooter>
               </DialogContent>
+              <ToastContainer />
             </form>
           </Dialog>
           <Dialog>
@@ -158,11 +172,16 @@ export default function Navbar() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant={"default"} className="w-full">
+                  <Button
+                    variant={"default"}
+                    className="w-full"
+                    onClick={notifySuccess}
+                  >
                     Add helments
                   </Button>
                 </DialogFooter>
               </DialogContent>
+              <ToastContainer />
             </form>
           </Dialog>
         </div>
