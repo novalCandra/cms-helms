@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Eye, HardHat, Lock, Mail, Phone, User } from "lucide-react";
+import { HardHat, Lock, Mail, Phone, User } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Form,
@@ -29,34 +29,37 @@ export default function Page() {
     defaultValues: {
       full_name: "",
       email: "",
-      phonenumber: "",
+      phone_number: "",
       password: "",
-      confirmpassword: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof FormSchemaRegister>) {
-    const resRegister = await fetch("", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(values),
-    });
+    try {
+      const resRegister = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        }
+      );
 
-    const data = await resRegister.json();
+      const data = await resRegister.json();
 
-    if (!data) {
-      alert("gagal register");
-      return;
+      if (!data) {
+        alert("gagal register");
+        return;
+      }
+      navigate.push("/auth/login");
+    } catch (error) {
+      console.error(error);
     }
-
-    await fetch("api/auth/set_token", {
-      method: "POST",
-      body: JSON.stringify({ token: data.token }),
-    });
-    navigate.push("/auth/login");
   }
+
+  console.log(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`);
   return (
     <>
       <div className="flex min-h-screen justify-center items-center">
@@ -136,7 +139,7 @@ export default function Page() {
                   />
                   <FormField
                     control={form.control}
-                    name="phonenumber"
+                    name="phone_number"
                     render={({ field }) => {
                       return (
                         <FormItem>
@@ -183,7 +186,7 @@ export default function Page() {
                       );
                     }}
                   />
-
+                  {/* 
                   <FormField
                     control={form.control}
                     name="confirmpassword"
@@ -207,14 +210,14 @@ export default function Page() {
                         </FormItem>
                       );
                     }}
-                  />
+                  /> */}
 
                   <div className="flex justify-center text-center">
                     <Checkbox className="bg-gray-300 mt-1 mr-3" />
                     <p>I agree to the Terms & Conditions and Privacy Policy</p>
                   </div>
-                  <div className="flex justify-center items-center">
-                    <Button className="w-80">Register</Button>
+                  <div className="flex justify-center items-center ">
+                    <Button className="w-80 cursor-pointer">Register</Button>
                   </div>
                 </form>
               </Form>
