@@ -22,29 +22,95 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AlarmClock, Calendar, HardHat, Undo2, Wallet } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import dataDumyTable from "../data/dataDumy";
 import HistoryData from "../data/HistoryDumy";
+import Cookies from "js-cookie";
+import { Spinner } from "@/components/ui/spinner";
+import { useRouter } from "next/navigation";
 export default function Page() {
   const nontifikasi = () => toast("welcome");
+  const navigate = useRouter();
   const [isModelOpen, setModalOpen] = useState(false);
-  // const [isReturnModalOpen, setReturnModalOpen] = useState(true);
-  const [borrowDate, setBorrowDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
+  const [loading, setIsLoading] = useState(true);
+  // const [borrowDate, setBorrowDate] = useState("");
+  // const [returnDate, setReturnDate] = useState("");
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const [profile, setProfile] = useState({
+    full_name: "",
+    email: "",
+  });
+
+  async function apiProfile() {
+    const token = Cookies.get("token");
+    const responApiProvile = await fetch(
+      `http://127.0.0.1:8000/api/v1/auth/profile`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        cache: "no-cache",
+      }
+    );
+    return responApiProvile.json();
+  }
+
+  useEffect(() => {
+    async function fetchProfile() {
+      const data = await apiProfile();
+      setProfile({
+        full_name: data.data.full_name,
+        email: data.data.email,
+      });
+      setIsLoading(false);
+    }
+
+    fetchProfile();
+  }, []);
+
+  const OnLogout = async (): Promise<void> => {
+    const token = Cookies.remove("token");
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+      method: "POST",
+      headers: {
+        Authrization: `Bearer ${token}`,
+      },
+      credentials: "include",
+      cache: "no-cache",
+    });
+    navigate.push("/auth/login");
+  };
+
+  if (loading) {
+    return (
+      <>
+        <div className="flex min-h-screen justify-center items-center">
+          <Spinner className="size-10 text-sky-400" />
+        </div>
+      </>
+    );
+  }
   return (
     <>
-      <Navbar />
+      <Navbar
+        profile={{
+          full_name: profile.full_name || "Quest",
+          email: profile.email || "quest@gmail.com",
+          onLogout: OnLogout,
+        }}
+      />
       <div className="min-h-screen bg-gray-100">
         <main className="container mx-auto px-4 py-8">
           {/* Welcome */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome back, John!
+              Welcome back, {profile.full_name || "Quest"}!
             </h1>
             <p className="text-muted-foreground">
               Manage your helmet borrowing and stay safe.
@@ -130,7 +196,6 @@ export default function Page() {
               </CardContent>
             </Card>
             {/* end borrows */}
-
 
             {/* Quick Action */}
             <Card className="border-0 shadow-md lg:w-96 md:w-40">
