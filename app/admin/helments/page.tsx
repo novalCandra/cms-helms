@@ -1,3 +1,4 @@
+"use client";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +14,7 @@ import ConfigSidebar from "../config/configSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Navbar from "../components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardHat, Search } from "lucide-react";
+import { HardHat, MoreHorizontal, Search } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -35,8 +36,82 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import DataDumyHelms from "../config/ConfigDataHelms";
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, FieldGroup, FieldSet } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { ToastContainer, toast } from "react-toastify";
+
+type TypeProduct = {
+  id: number;
+  helmet_name: string;
+  condition: string;
+  status: string;
+  daily_price: number;
+  late_fee_per_day: number;
+};
 export default function Page() {
+  const [loading, setIoading] = useState(true);
+  const [pageData, setpageData] = useState<TypeProduct[]>([]);
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const Notify = () =>
+    toast.success("Success Add Helments", {
+      theme: "colored",
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+    });
+  async function helmsData() {
+    const token = Cookies.get("token");
+    const apiHelmsAll = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/helments`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        cache: "no-cache",
+      }
+    );
+
+    return apiHelmsAll.json();
+  }
+  useEffect(() => {
+    async function setApiHelms() {
+      const addApiData = await helmsData();
+      setpageData(addApiData.data.data);
+      setIoading(false);
+    }
+    setApiHelms();
+  }, []);
+
+  if (loading) {
+    return (
+      <>
+        <div className="flex min-h-screen justify-center items-center mx-auto w-[100vw]">
+          <Spinner className="size-10 text-sky-400" />
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <Sidebar>
@@ -86,7 +161,7 @@ export default function Page() {
                   <h3 className="text-xl">Helmet Inventory</h3>
                 </div>
                 <div className="flex justify-center gap-5">
-                  <InputGroup>
+                  <InputGroup className="bg-white">
                     <InputGroupInput placeholder="Search Helments" />
                     <InputGroupAddon>
                       <Search />
@@ -110,26 +185,115 @@ export default function Page() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <Table className="cursor-pointer">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Helmet ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Size</TableHead>
-                    <TableHead>Condition</TableHead>
-                    <TableHead> Borrowed By</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Number</TableHead>
+                    <TableHead>Helments</TableHead>
+                    <TableHead>condition</TableHead>
+                    <TableHead>status</TableHead>
+                    <TableHead>Daily Price</TableHead>
+                    <TableHead>Late Fee Per Day</TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {DataDumyHelms.map((item) => (
+                  {pageData.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.helment_id}</TableCell>
-                      <TableCell>{item.type}</TableCell>
-                      <TableCell>{item.condition}</TableCell>
+                      <TableCell>{item.id}</TableCell>
+                      <TableCell>{item.helmet_name}</TableCell>
                       <TableCell>{item.status}</TableCell>
-                      <TableCell>{item.borrowed_by}</TableCell>
-                      <TableCell>{item.action}</TableCell>
+                      <TableCell>{item.condition}</TableCell>
+                      <TableCell>Rp.{item.daily_price}</TableCell>
+                      <TableCell>Rp.{item.late_fee_per_day}</TableCell>
+                      <TableCell>
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant={"ghost"}
+                              aria-label="Open menu"
+                              size="icon-sm"
+                              className="cursor-pointer"
+                            >
+                              <MoreHorizontal />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-40" align="end">
+                            <DropdownMenuLabel>
+                              Action Helments
+                            </DropdownMenuLabel>
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem
+                                onSelect={() => setShowNewDialog(true)}
+                                className="cursor-pointer"
+                              >
+                                Update
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-500 cursor-pointer"
+                                onClick={Notify}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <ToastContainer
+                          position="top-right"
+                          autoClose={2000}
+                        />
+                        <Dialog
+                          open={showNewDialog}
+                          onOpenChange={setShowNewDialog}
+                        >
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle>Update Data Helms</DialogTitle>
+                              <DialogDescription>
+                                mengedit sebuah Data Helms
+                              </DialogDescription>
+                            </DialogHeader>
+                            <form>
+                              <FieldGroup>
+                                <FieldSet>
+                                  <Field>Helment Name</Field>
+                                  <Input
+                                    id="helment_name"
+                                    name="helment_name"
+                                    placeholder=""
+                                  />
+                                  <Field>condition</Field>
+                                  <Input
+                                    id="condition"
+                                    name="condition"
+                                    placeholder=""
+                                  />
+                                  <Field>status</Field>
+                                  <Input
+                                    id="status"
+                                    name="status"
+                                    placeholder=""
+                                  />
+                                  <Field>Daily Price</Field>
+                                  <Input
+                                    type="number"
+                                    id="daily_price"
+                                    name="daily_price"
+                                    placeholder=""
+                                  />
+                                  <Field> Late Fee Per Day</Field>
+                                  <Input
+                                    type="number"
+                                    id="late_fee_per_day"
+                                    name="late_fee_per_day"
+                                    placeholder=""
+                                  />
+                                </FieldSet>
+                              </FieldGroup>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
