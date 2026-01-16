@@ -18,13 +18,16 @@ export default function Header() {
               <Button
                 variant={"outline"}
                 type="submit"
-                className="cursor-pointer px-10 py-5 rounded-xs"
+                className="cursor-pointer px-10 py-5 rounded-[5px]"
               >
                 Login
               </Button>
             </Link>
             <Link href={"/auth/register"}>
-              <Button variant={"default"} className="cursor-pointer rounded-xs">
+              <Button
+                variant={"secondary"}
+                className="cursor-pointer px-10 py-5 rounded-[5px]"
+              >
                 Get Started
               </Button>
             </Link>
