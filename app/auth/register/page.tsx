@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Eye, HardHat, Lock, Mail, Phone, User, Users } from "lucide-react";
+import { HardHat, Lock, Mail, Phone, User } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Form,
@@ -29,19 +29,39 @@ export default function Page() {
     defaultValues: {
       full_name: "",
       email: "",
-      phonenumber: "",
+      phone_number: "",
       password: "",
-      confirmpassword: "",
     },
   });
 
-  async function onSubmit() {
-    console.log("check");
-    navigate.push("/login");
+  async function onSubmit(values: z.infer<typeof FormSchemaRegister>) {
+    try {
+      const resRegister = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        }
+      );
+
+      const data = await resRegister.json();
+
+      if (!data) {
+        alert("gagal register");
+        return;
+      }
+      navigate.push("/auth/login");
+    } catch (error) {
+      console.error(error);
+    }
   }
+
+  console.log(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`);
   return (
     <>
-      {/* <Navbar /> */}
       <div className="flex min-h-screen justify-center items-center">
         <div className="w-full max-w-md">
           {/* logo */}
@@ -65,7 +85,10 @@ export default function Page() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form className="space-y-5">
+                <form
+                  className="space-y-5"
+                  onSubmit={form.handleSubmit(onSubmit)}
+                >
                   <FormField
                     control={form.control}
                     name="full_name"
@@ -116,7 +139,7 @@ export default function Page() {
                   />
                   <FormField
                     control={form.control}
-                    name="phonenumber"
+                    name="phone_number"
                     render={({ field }) => {
                       return (
                         <FormItem>
@@ -163,7 +186,7 @@ export default function Page() {
                       );
                     }}
                   />
-
+                  {/* 
                   <FormField
                     control={form.control}
                     name="confirmpassword"
@@ -187,14 +210,14 @@ export default function Page() {
                         </FormItem>
                       );
                     }}
-                  />
+                  /> */}
 
                   <div className="flex justify-center text-center">
                     <Checkbox className="bg-gray-300 mt-1 mr-3" />
                     <p>I agree to the Terms & Conditions and Privacy Policy</p>
                   </div>
-                  <div className="flex justify-center items-center">
-                    <Button className="w-80">Register</Button>
+                  <div className="flex justify-center items-center ">
+                    <Button className="w-80 cursor-pointer">Register</Button>
                   </div>
                 </form>
               </Form>

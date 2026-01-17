@@ -1,8 +1,13 @@
+"use client";
 import { Bell, HardHat, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-
-export default function Navbar() {
+type Profile = {
+  full_name: string;
+  email: string;
+  onLogout: () => void;
+};
+export default function Navbar({ profile }: { profile: Profile }) {
   return (
     <>
       <nav className="border-b border-border sticky top-0 z-50 bg-white">
@@ -25,14 +30,18 @@ export default function Navbar() {
                 <AvatarFallback>MK</AvatarFallback>
               </Avatar>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-foreground">Mikaela</p>
-                <p className="text-xs text-muted-foreground">
-                  mikaela@gmail.com
+                <p className="text-sm font-medium text-foreground">
+                  {profile.full_name}
                 </p>
+                <p className="text-xs text-muted-foreground">{profile.email}</p>
               </div>
             </div>
             <div className="flex items-center">
-              <Button variant={"link"}>
+              <Button
+                variant={"link"}
+                className="cursor-pointer"
+                onClick={profile.onLogout}
+              >
                 <LogOut />
               </Button>
             </div>
