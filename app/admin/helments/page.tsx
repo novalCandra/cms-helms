@@ -14,7 +14,13 @@ import ConfigSidebar from "../config/configSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Navbar from "../components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardHat, MoreHorizontal, Search } from "lucide-react";
+import {
+  ChevronUp,
+  HardHat,
+  MoreHorizontal,
+  Search,
+  User2,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -33,6 +39,7 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -50,8 +57,10 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -68,16 +77,38 @@ type TypeProduct = {
   late_fee_per_day: number;
 };
 export default function Page() {
+  const [profile, setProfile] = useState({
+    full_name: "",
+    email: "",
+  });
   const [loading, setIoading] = useState(true);
   const [pageData, setpageData] = useState<TypeProduct[]>([]);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const Notify = () =>
-    toast.success("Success Add Helments", {
-      theme: "colored",
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-    });
+  const [search, setIsSearch] = useState("");
+  const [select, setSelect] = useState("all");
+  const [selectedHelms, setSelectHelms] = useState<TypeProduct | null>(null);
+  const [formData, setFormData] = useState({
+    helmet_name: "",
+    condition: "",
+    status: "",
+    daily_price: "",
+    late_fee_per_day: "",
+  });
+
+  // filter Search and Select
+  const filteredeData = pageData.filter((item) => {
+    const matchSearch =
+      search.trim() === "" ||
+      `${item.helmet_name} ${item.status} ${item.condition}`
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+    const matchStatus = select === "all" || item.status === select;
+
+    return matchSearch && matchStatus;
+  });
+
+  // all Helms
   async function helmsData() {
     const token = Cookies.get("token");
     const apiHelmsAll = await fetch(
@@ -89,19 +120,107 @@ export default function Page() {
         },
         credentials: "include",
         cache: "no-cache",
-      }
+      },
     );
 
     return apiHelmsAll.json();
   }
+
+  // all Profile
+  async function Profile() {
+    const token = Cookies.get("token");
+    const apiProfile = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        cache: "no-cache",
+      },
+    );
+
+    return apiProfile.json();
+  }
+
+  // delete Data
+  async function deleteData(id: number) {
+    const token = Cookies.get("token");
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/helments/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        cache: "no-cache",
+      });
+      setpageData((prev) => prev.filter((item) => id !== item.id));
+      toast.success("sucess Delete Data");
+    } catch (error) {
+      toast.error("gagal Deleet Data");
+    }
+  }
+
+  // update Data
+  async function updateData(id: number) {
+    try {
+      if (!selectedHelms) return;
+
+      // 2. siapkan data ke backend
+      const payload = {
+        helmet_name: formData.helmet_name,
+        condition: formData.condition,
+        status: formData.status,
+        daily_price: Number(formData.daily_price),
+        late_fee_per_day: Number(formData.late_fee_per_day),
+      };
+      const token = Cookies.get("token");
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/helments/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-cache",
+        body: JSON.stringify(payload),
+      });
+      // setpageData((prev) => prev.map((item) => id !== item.id));
+      setpageData((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...payload } : item)),
+      );
+      toast.success("Success Update Helms");
+    } catch (error) {
+      toast.error(`${error}`);
+    }
+  }
+
   useEffect(() => {
     async function setApiHelms() {
       const addApiData = await helmsData();
+      const apiProfile = await Profile();
+      setProfile({
+        full_name: apiProfile.data.full_name,
+        email: apiProfile.data.email,
+      });
       setpageData(addApiData.data.data);
       setIoading(false);
     }
     setApiHelms();
   }, []);
+
+  useEffect(() => {
+    if (selectedHelms) {
+      setFormData({
+        helmet_name: selectedHelms.helmet_name,
+        condition: selectedHelms.condition,
+        status: selectedHelms.status,
+        daily_price: String(selectedHelms.daily_price),
+        late_fee_per_day: String(selectedHelms.late_fee_per_day),
+      });
+    }
+  }, [selectedHelms]);
 
   if (loading) {
     return (
@@ -136,21 +255,28 @@ export default function Page() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="px-5">
+        <SidebarFooter>
           <div className="flex items-center cursor-pointer gap-2.5">
-            <Avatar>
-              <AvatarFallback>MK</AvatarFallback>
-            </Avatar>
-            <div className="flex items-center">
-              <div className="hidden sm:block">
-                <p className="text-sm font-bold">Mikaela</p>
-                <p className="text-muted-foreground">Mikaela@gmail.com</p>
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="bg-white">
+                <SidebarMenuButton>
+                  <User2 /> {profile.full_name}
+                  <ChevronUp className="ml-auto" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" className="w-56 rounded-[10px]">
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="w-56 rounded-[10px] cursor-pointer"
+                >
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </SidebarFooter>
       </Sidebar>
-      <div className="container min-h-full w-[250rem]">
+      <div className="container min-h-full w-10000">
         <Navbar />
         <div className="flex items-center px-10 py-4">
           <Card className="w-full">
@@ -162,7 +288,10 @@ export default function Page() {
                 </div>
                 <div className="flex justify-center gap-5">
                   <InputGroup className="bg-white">
-                    <InputGroupInput placeholder="Search Helments" />
+                    <InputGroupInput
+                      placeholder="Search Helments"
+                      onChange={(e) => setIsSearch(e.target.value)}
+                    />
                     <InputGroupAddon>
                       <Search />
                     </InputGroupAddon>
@@ -174,10 +303,9 @@ export default function Page() {
                     <SelectContent>
                       <SelectGroup>
                         <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="avaible">Avaible</SelectItem>
-                        <SelectItem value="borrowed">Borrowed</SelectItem>
-                        <SelectItem value="maintance">MainTance</SelectItem>
-                        <SelectItem value="retired">Retired</SelectItem>
+                        <SelectItem value="available">Avaible</SelectItem>
+                        <SelectItem value="rented">Retired</SelectItem>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -198,9 +326,9 @@ export default function Page() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pageData.map((item) => (
+                  {filteredeData.map((item, index) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.id}</TableCell>
+                      <TableCell>{index + 1}</TableCell>
                       <TableCell>{item.helmet_name}</TableCell>
                       <TableCell>{item.status}</TableCell>
                       <TableCell>{item.condition}</TableCell>
@@ -224,72 +352,145 @@ export default function Page() {
                             </DropdownMenuLabel>
                             <DropdownMenuGroup>
                               <DropdownMenuItem
-                                onSelect={() => setShowNewDialog(true)}
+                                onSelect={() => {
+                                  setSelectHelms(item);
+                                  setShowNewDialog(true);
+                                  setFormData({
+                                    helmet_name: item.helmet_name,
+                                    condition: item.condition,
+                                    status: item.status,
+                                    daily_price: String(item.daily_price),
+                                    late_fee_per_day: String(
+                                      item.late_fee_per_day,
+                                    ),
+                                  });
+                                }}
                                 className="cursor-pointer"
+                                onClick={() => updateData(item.id)}
                               >
                                 Update
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-red-500 cursor-pointer"
-                                onClick={Notify}
+                                onClick={() => deleteData(item.id)}
                               >
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuGroup>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <ToastContainer
-                          position="top-right"
-                          autoClose={2000}
-                        />
+
                         <Dialog
                           open={showNewDialog}
                           onOpenChange={setShowNewDialog}
                         >
-                          <DialogContent className="sm:max-w-[425px]">
+                          <DialogContent className="sm:max-w-[425px] bg-[#FCF8F8]">
                             <DialogHeader>
                               <DialogTitle>Update Data Helms</DialogTitle>
                               <DialogDescription>
                                 mengedit sebuah Data Helms
                               </DialogDescription>
                             </DialogHeader>
-                            <form>
+                            <form
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                updateData(selectedHelms?.id);
+                                setShowNewDialog(false);
+                              }}
+                            >
                               <FieldGroup>
                                 <FieldSet>
                                   <Field>Helment Name</Field>
                                   <Input
-                                    id="helment_name"
-                                    name="helment_name"
-                                    placeholder=""
+                                    value={formData.helmet_name}
+                                    readOnly
+                                    onChange={(e) =>
+                                      setFormData({
+                                        ...formData,
+                                        helmet_name: e.target.value,
+                                      })
+                                    }
+                                    className=" bg-white rounded-[10px] py-6"
                                   />
                                   <Field>condition</Field>
-                                  <Input
-                                    id="condition"
-                                    name="condition"
-                                    placeholder=""
-                                  />
+                                  <Select
+                                    onValueChange={setSelect}
+                                    value={formData.status}
+                                  >
+                                    <SelectTrigger className="w-96 py-6 bg-white rounded-[10px]">
+                                      <SelectValue placeholder="Select Status Helm" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        <SelectLabel>Status Helms</SelectLabel>
+                                        <SelectItem value="available">
+                                          Available
+                                        </SelectItem>
+                                        <SelectItem value="rented">
+                                          Rented
+                                        </SelectItem>
+                                        <SelectItem value="maintenance">
+                                          Maintenance
+                                        </SelectItem>
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
                                   <Field>status</Field>
-                                  <Input
-                                    id="status"
-                                    name="status"
-                                    placeholder=""
-                                  />
+                                  <Select
+                                    onValueChange={setSelect}
+                                    value={formData.status}
+                                  >
+                                    <SelectTrigger className="w-96 py-6 bg-white rounded-[10px]">
+                                      <SelectValue placeholder="Select Status Helm" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        <SelectLabel>Status Helms</SelectLabel>
+                                        <SelectItem value="available">
+                                          Available
+                                        </SelectItem>
+                                        <SelectItem value="rented">
+                                          Rented
+                                        </SelectItem>
+                                        <SelectItem value="maintenance">
+                                          Maintenance
+                                        </SelectItem>
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
                                   <Field>Daily Price</Field>
                                   <Input
                                     type="number"
-                                    id="daily_price"
-                                    name="daily_price"
-                                    placeholder=""
+                                    readOnly
+                                    value={formData.daily_price}
+                                    className=" bg-white rounded-[10px] py-6"
                                   />
                                   <Field> Late Fee Per Day</Field>
                                   <Input
                                     type="number"
-                                    id="late_fee_per_day"
-                                    name="late_fee_per_day"
-                                    placeholder=""
+                                    readOnly
+                                    value={formData.daily_price}
+                                    className=" bg-white rounded-[10px] py-6"
                                   />
                                 </FieldSet>
                               </FieldGroup>
+                              <DialogFooter className="mt-4">
+                                <DialogClose asChild>
+                                  <Button
+                                    type="submit"
+                                    variant={"destructive"}
+                                    className="cursor-pointer"
+                                  >
+                                    Batal
+                                  </Button>
+                                </DialogClose>
+                                <Button
+                                  type="submit"
+                                  className="cursor-pointer"
+                                >
+                                  Update
+                                </Button>
+                              </DialogFooter>
                             </form>
                           </DialogContent>
                         </Dialog>
@@ -302,6 +503,7 @@ export default function Page() {
           </Card>
         </div>
       </div>
+      <ToastContainer position="top-right" autoClose={2000} />
     </>
   );
 }
