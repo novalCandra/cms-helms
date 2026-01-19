@@ -51,6 +51,7 @@ import {
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 type TypeBorrowes = {
   id: number;
   users: users;
@@ -71,6 +72,7 @@ type helm = {
 };
 
 export default function Page() {
+  const navigate = useRouter();
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -120,6 +122,20 @@ export default function Page() {
 
     return ApiBorrowing.json();
   }
+
+  const logoutProfile = async (): Promise<void> => {
+    const token = Cookies.remove("token");
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+      method: "POST",
+      headers: {
+        Authozation: `Bearer ${token}`,
+      },
+      credentials: "include",
+      cache: "no-cache",
+    });
+    navigate.push("/auth/login");
+    window.location.reload();
+  };
   useEffect(() => {
     async function BorrowingAll() {
       const AllBorrowings = await AllBorrowing();
@@ -179,7 +195,7 @@ export default function Page() {
                   variant="destructive"
                   className="w-56 rounded-[10px] cursor-pointer"
                 >
-                  <span>Sign out</span>
+                  <span onClick={logoutProfile}>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

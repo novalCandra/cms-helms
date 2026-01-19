@@ -11,7 +11,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import ConfigSidebar from "../config/configSidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Navbar from "../components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -67,6 +66,7 @@ import {
 import { Field, FieldGroup, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToastContainer, toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 type TypeProduct = {
   id: number;
@@ -77,6 +77,7 @@ type TypeProduct = {
   late_fee_per_day: number;
 };
 export default function Page() {
+  const navigate = useRouter();
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -161,6 +162,20 @@ export default function Page() {
       toast.error("gagal Deleet Data");
     }
   }
+
+  const logoutProfile = async (): Promise<void> => {
+    const token = Cookies.remove("token");
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+      method: "POST",
+      headers: {
+        Authozation: `Bearer ${token}`,
+      },
+      credentials: "include",
+      cache: "no-cache",
+    });
+    navigate.push("/auth/login");
+    window.location.reload();
+  };
 
   // update Data
   async function updateData(id: number) {
@@ -269,7 +284,7 @@ export default function Page() {
                   variant="destructive"
                   className="w-56 rounded-[10px] cursor-pointer"
                 >
-                  <span>Sign out</span>
+                  <span onClick={logoutProfile}>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
