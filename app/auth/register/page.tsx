@@ -37,14 +37,14 @@ export default function Page() {
   async function onSubmit(values: z.infer<typeof FormSchemaRegister>) {
     try {
       const resRegister = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        `http://127.0.0.1:8000/api/v1/auth/register`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(values),
-        }
+        },
       );
 
       const data = await resRegister.json();

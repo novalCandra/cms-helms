@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { toast } from "react-toastify";
 export default function FormAuth() {
   const navigate = useRouter();
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -32,34 +33,40 @@ export default function FormAuth() {
   });
 
   async function OnSubmit(values: z.infer<typeof FormSchema>) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(values),
-    });
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-cache",
+        body: JSON.stringify(values),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!data) {
-      alert("Tidak bisa Login");
-      return;
-    }
+      if (!data) {
+        alert("Tidak bisa Login");
+        return;
+      }
 
-    await fetch("/api/auth/set_token", {
-      method: "POST",
-      body: JSON.stringify({ token: data.data.token }),
-      credentials: "include",
-    });
+      await fetch("/api/auth/set_token", {
+        method: "POST",
+        body: JSON.stringify({ token: data.data.token }),
+        credentials: "include",
+      });
 
-    if (data.data.role === "admin") {
-      navigate.push("/admin");
-    } else if (data.data.role === "petugas") {
-      navigate.push("/petugas");
-    } else {
-      navigate.push("/users/home");
+      if (data.data.role === "admin") {
+        navigate.push("/admin");
+      } else if (data.data.role === "petugas") {
+        navigate.push("/petugas");
+      } else {
+        navigate.push("/users/home");
+      }
+    } catch (error) {
+      toast.error("error");
+      console.error(error);
     }
   }
   return (
