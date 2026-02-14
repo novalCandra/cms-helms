@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Table,
@@ -21,24 +20,55 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlarmClock, Calendar, HardHat, Undo2, Wallet } from "lucide-react";
+import {
+  Calendar,
+  Hammer,
+  Hand,
+  HardHat,
+  Undo2,
+  WalletCardsIcon,
+  Warehouse,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import dataDumyTable from "../data/dataDumy";
-import HistoryData from "../data/HistoryDumy";
 import Cookies from "js-cookie";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Form, FormField } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import z from "zod";
+import SchemaBorrowed from "../schema/SchemaBorrowed";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import Home from "@/app/page";
+import { ToastContainer, toast } from "react-toastify";
+type TypeHelms = {
+  helmet_name: string;
+  condition: string;
+  status: string;
+  daily_price: string;
+};
 export default function Page() {
-  const nontifikasi = () => toast("welcome");
   const navigate = useRouter();
   const [isModelOpen, setModalOpen] = useState(false);
   const [loading, setIsLoading] = useState(true);
-  // const [borrowDate, setBorrowDate] = useState("");
-  // const [returnDate, setReturnDate] = useState("");
+  const [avaible, setAvaible] = useState<TypeHelms[]>([]);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const form = useForm<z.infer<typeof SchemaBorrowed>>({
+    resolver: zodResolver(SchemaBorrowed),
+    defaultValues: {
+      helmet_id: "",
+      borrow_date: "",
+      return_date: "",
+    },
+  });
 
   const [profile, setProfile] = useState({
     full_name: "",
@@ -56,9 +86,51 @@ export default function Page() {
         },
         credentials: "include",
         cache: "no-cache",
-      }
+      },
     );
     return responApiProvile.json();
+  }
+
+  async function ApiHelms() {
+    try {
+      const token = Cookies.get("token");
+      const helms = await fetch(`http://127.0.0.1:8000/api/v1/helments`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-cache",
+        credentials: "include",
+      });
+      return helms.json();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function PostBorrowed(values: z.infer<typeof SchemaBorrowed>) {
+    const token = Cookies.get("token");
+    try {
+      const Borrowed = await fetch(`http://127.0.0.1:8000/api/v1/borroed`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        cache: "no-cache",
+        credentials: "include",
+        body: JSON.stringify(values),
+      });
+      toast.success("Sucess Borrwoed Helms");
+      Borrowed.json();
+      form.reset();
+      setModalOpen(false)
+      console.log("check");
+    } catch (error) {
+      toast.error("error");
+      console.error(error);
+    }
   }
 
   useEffect(() => {
@@ -68,6 +140,8 @@ export default function Page() {
         full_name: data.data.full_name,
         email: data.data.email,
       });
+      const dataHelms = await ApiHelms();
+      setAvaible(dataHelms.data.data);
       setIsLoading(false);
     }
 
@@ -117,9 +191,8 @@ export default function Page() {
             </p>
           </div>
           {/* end welcome */}
-
           {/* Status card */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 lg:gap-96 md:gap-16 sm:gap-44 mb-8">
+          <div className="flex flex-col md:flex-row gap-10 justify-between mb-6">
             {/* Current Status */}
             <Card className="border-0 shadow-md lg:w-72 md:w-40">
               <CardHeader className="-pb-4">
@@ -174,28 +247,6 @@ export default function Page() {
               </CardContent>
             </Card>
             {/* end borrows */}
-            {/* borrows */}
-            <Card className="border-0 shadow-md lg:w-72 md:w-40">
-              <CardHeader className="-pb-4">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Spent
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-green-200 py-2 px-2 rounded-sm">
-                      <Wallet className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">Rp 225.000</p>
-                      <p className="text-base text-foreground">Total Spent</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            {/* end borrows */}
 
             {/* Quick Action */}
             <Card className="border-0 shadow-md lg:w-96 md:w-40">
@@ -207,7 +258,7 @@ export default function Page() {
               <CardContent className="space-y-3">
                 <Dialog open={isModelOpen} onOpenChange={setModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="w-full" size={"lg"} disabled>
+                    <Button className="w-full" size={"lg"}>
                       <HardHat className="w-4 h-4 mr-2" />
                       Borrow Helmet
                     </Button>
@@ -216,28 +267,83 @@ export default function Page() {
                     <DialogHeader>
                       <DialogTitle>Borrow a Helmet</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                      <div className="space-y-2">
-                        <Label>Select Helmet</Label>
-                        <Input type="date" />
-                      </div>
-                      <div className="spave-y-2">
-                        <Label>Return Schedule</Label>
-                        <Input type="date" />
-                      </div>
-                      <Button className="w-full">Confirm Borrow</Button>
-                    </div>
+                    <Form {...form}>
+                      <form
+                        onSubmit={form.handleSubmit(PostBorrowed)}
+                        className="space-y-6"
+                      >
+                        <div className="space-y-4 mt-4">
+                          <div className="space-y-2">
+                            <Label>Select Helmet</Label>
+                            <FormField
+                              control={form.control}
+                              name="helmet_id"
+                              render={({ field }) => (
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Choose A Helments" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="6">KYT</SelectItem>
+                                    <SelectItem value="2">
+                                      Shoies X16
+                                    </SelectItem>
+                                    <SelectItem value="8">
+                                      Arai RX-7V
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Borrow Date</Label>
+                            <FormField
+                              control={form.control}
+                              name="borrow_date"
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  type="date"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                />
+                              )}
+                            />
+                          </div>
+                          <div className="spave-y-2">
+                            <Label>Return Schedule</Label>
+                            <FormField
+                              control={form.control}
+                              name="return_date"
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  type="date"
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                />
+                              )}
+                            />
+                          </div>
+                          {/* <DialogClose asChild> */}
+                          <Button className="w-full" type="submit">
+                            <WalletCardsIcon className="w-7 h-7 text-white" />
+                            Confirm Borrow
+                          </Button>
+                          {/* </DialogClose> */}
+                        </div>
+                      </form>
+                    </Form>
                   </DialogContent>
                 </Dialog>
 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className="w-full"
-                      size={"lg"}
-                      onClick={nontifikasi}
-                    >
+                    <Button variant={"outline"} className="w-full" size={"lg"}>
                       <Undo2 className="w-4 h-4 mr-2" />
                       Return Helments
                     </Button>
@@ -269,7 +375,9 @@ export default function Page() {
                         </div>
                       </div>
                       <DialogClose asChild>
-                        <Button className="w-full">Confirm Return</Button>
+                        <Button type="submit" className="w-full">
+                          Confirm Return
+                        </Button>
                       </DialogClose>
                     </div>
                   </DialogContent>
@@ -279,7 +387,6 @@ export default function Page() {
             {/* end borrows */}
           </div>
           {/*end status card */}
-
           {/* Table Avaible Helments */}
           <Card className="border-0 shadow-md mb-8">
             <CardHeader>
@@ -293,25 +400,55 @@ export default function Page() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Helmet ID</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Size</TableHead>
+                      <TableHead>Number</TableHead>
+                      <TableHead>Helmet</TableHead>
                       <TableHead>Condition</TableHead>
                       <TableHead>Price/Day</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {dataDumyTable.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.helmedId}</TableCell>
-                        <TableCell>{item.type}</TableCell>
-                        <TableCell>{item.size}</TableCell>
+                    {avaible.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{index + 1}</TableCell>
+
+                        <TableCell>{item.helmet_name}</TableCell>
                         <TableCell>{item.condition}</TableCell>
                         <TableCell className="text-blue-400">
-                          {item.price}
+                          {item.daily_price}
                         </TableCell>
-                        <TableCell>{item.status}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              item.status === "available"
+                                ? "default"
+                                : item.status === "rented"
+                                  ? "destructive"
+                                  : item.status === "maintenance"
+                                    ? "outline"
+                                    : "secondary"
+                            }
+                          >
+                            {item.status === "available" ? (
+                              <>
+                                <Warehouse />
+                                {item.status}
+                              </>
+                            ) : item.status === "rented" ? (
+                              <>
+                                <Hand />
+                                {item.status}
+                              </>
+                            ) : item.status === "maintenance" ? (
+                              <>
+                                <Hammer />
+                                {item.status}
+                              </>
+                            ) : (
+                              <Home />
+                            )}
+                          </Badge>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -319,49 +456,10 @@ export default function Page() {
               </div>
             </CardContent>
           </Card>
-          {/* end table Avaible Helments */}
-
-          {/* Table History */}
-          <Card className="border-0 shadow-md mb-8">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <AlarmClock className="h-10 w-10 text-sky-400" />
-                <p className="text-xl font-bold">My Borrow History</p>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Borrow ID</TableHead>
-                      <TableHead>Helmet ID</TableHead>
-                      <TableHead>Borrow Date</TableHead>
-                      <TableHead>Return Date</TableHead>
-                      <TableHead>Payment ID</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-
-                  <TableBody>
-                    {HistoryData.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.borrow_id}</TableCell>
-                        <TableCell>{item.helment_id}</TableCell>
-                        <TableCell>{item.boorow_date}</TableCell>
-                        <TableCell>{item.return_date}</TableCell>
-                        <TableCell>{item.paymentId}</TableCell>
-                        <TableCell>{item.status}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-          {/* end Table History */}
+          {/* end table Avaible Helments */}{" "}
         </main>
       </div>
+      <ToastContainer position="top-right" autoClose={2000} />
     </>
   );
 }
