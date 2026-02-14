@@ -64,7 +64,7 @@ export default function Navbar() {
         },
       );
 
-      const allApi = apiAddHelms.json();
+      apiAddHelms.json();
       toast.success("Success Add Helms");
       form.reset();
       setOpenModal(true);
