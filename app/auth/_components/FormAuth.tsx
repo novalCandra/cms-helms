@@ -144,7 +144,7 @@ export default function FormAuth() {
                   <Link href={"/auth/forgotpassword"}>Forgot password</Link>
                 </div>
                 <div className="flex justify-center items-center">
-                  <Button className="w-80">Login</Button>
+                  <Button className="w-80 cursor-pointer">Login</Button>
                 </div>
               </form>
             </Form>
