@@ -12,18 +12,18 @@ export const ConfigSidebar: TypeSidebar[] = [
     id: 1,
     label: "Active Borrowers",
     icon: Home,
-    url: "/petugas",
+    url: "/officer",
   },
   {
     id: 2,
     label: "Helmet Conditions",
     icon: HardHat,
-    url: "/condition",
+    url: "/officer/helm",
   },
   {
     id: 3,
     label: "Manage Users",
     icon: Users,
-    url: "/users",
+    url: "/officer/manage",
   },
 ];
