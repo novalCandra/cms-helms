@@ -60,7 +60,7 @@ export default function FormAuth() {
       if (data.data.role === "admin") {
         navigate.push("/admin");
       } else if (data.data.role === "petugas") {
-        navigate.push("/petugas");
+        navigate.push("/officer");
       } else {
         navigate.push("/users/home");
       }
