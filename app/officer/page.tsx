@@ -1,3 +1,4 @@
+"use client";
 import {
   Sidebar,
   SidebarFooter,
@@ -36,14 +37,116 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BodyConfig } from "./config/BodyConfig";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import { Spinner } from "@/components/ui/spinner";
+import { useRouter } from "next/navigation";
+type TypeActiveBorrowed = {
+  id: number;
+  borrow_date: string;
+  return_date: string;
+  status: string;
+  users: {
+    full_name: string;
+  };
+  helm: {
+    helmet_name: string;
+  };
+};
 export default function Page() {
+  const navigate = useRouter();
+  const [profile, setProfile] = useState({
+    full_name: "",
+    email: "",
+  });
+
+  const [active, setActive] = useState<TypeActiveBorrowed[]>();
+
+  const [loading, setIsLoading] = useState<boolean>(true);
+
+  async function Apiprofile() {
+    const token = Cookies.get("token");
+    try {
+      const apiProfile = await fetch(
+        `http://127.0.0.1:8000/api/v1/auth/profile`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-cache",
+          credentials: "include",
+        },
+      );
+      return apiProfile.json();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function ActiveApi() {
+    const token = Cookies.get("token");
+    try {
+      const apiDataActive = await fetch(
+        `http://127.0.0.1:8000/api/v1/borroed`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          cache: "no-cache",
+        },
+      );
+      return apiDataActive.json();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const OnLogout = async (): Promise<void> => {
+    const token = Cookies.get("token");
+    await fetch(`http://127.0.0.1:8000/api/v1/auth/logout`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-cache",
+      credentials: "include",
+    });
+    window.location.reload();
+    navigate.push("auth/login");
+    Cookies.remove("token");
+  };
+
+  useEffect(() => {
+    async function fethingProfile() {
+      const apiprofile = await Apiprofile();
+      setProfile({
+        full_name: apiprofile.data.full_name,
+        email: apiprofile.data.email,
+      });
+      setIsLoading(false);
+      const apiActive = await ActiveApi();
+      setActive(apiActive.data);
+    }
+    fethingProfile();
+  }, []);
+  if (loading) {
+    return (
+      <>
+        <div className="flex min-h-screen items-center justify-center mx-auto w-screen">
+          <Spinner className="size-10 text-sky-400" />
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <Sidebar>
@@ -80,7 +183,7 @@ export default function Page() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="bg-white">
                 <SidebarMenuButton>
-                  <User2 /> Mikaela
+                  <User2 /> {profile?.full_name || "Quest"}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -89,10 +192,13 @@ export default function Page() {
                   variant="destructive"
                   className="w-56 rounded-[10px] cursor-pointer"
                 >
-                  <span
-                  //   onClick={logoutProfile}
-                  >
-                    Sign out
+                  <span>
+                    <Button
+                      onClick={OnLogout}
+                      className="w-full bg-transparent text-black hover:bg-transparent cursor-pointer"
+                    >
+                      Sign out
+                    </Button>
                   </span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -189,15 +295,14 @@ export default function Page() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {BodyConfig.map((item) => (
+                    {active?.map((item, index) => (
                       <TableRow key={item.id}>
-                        <TableCell>{item.id}</TableCell>
-                        <TableCell>{item.user}</TableCell>
-                        <TableCell>{item.helment_name}</TableCell>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{item.users.full_name}</TableCell>
+                        <TableCell>{item.helm.helmet_name}</TableCell>
                         <TableCell>{item.borrow_date}</TableCell>
                         <TableCell>{item.return_date}</TableCell>
                         <TableCell>{item.status}</TableCell>
-                        <TableCell>{item.banned}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

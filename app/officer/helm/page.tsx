@@ -20,8 +20,85 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ConfigDataHelms } from "../config/ConfigDataHelm";
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import { Spinner } from "@/components/ui/spinner";
+type TypeHelms = {
+  id: number;
+  helmet_name: string;
+  status: string;
+  condition: string;
+};
 export default function Page() {
+  const [helm, setHelms] = useState<TypeHelms[]>([]);
+  const [profile, setProfile] = useState({
+    full_name: "",
+    email: "",
+  });
+  const [loading, setloading] = useState(true);
+  async function ConditionHelmHub() {
+    const token = Cookies.get("token");
+    try {
+      const apiDataHelms = await fetch(
+        `http://127.0.0.1:8000/api/v1/helments`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-cache",
+          credentials: "include",
+        },
+      );
+      return apiDataHelms.json();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function Apiprofile() {
+    const token = Cookies.get("token");
+    try {
+      const apiProfile = await fetch(
+        `http://127.0.0.1:8000/api/v1/auth/profile`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-cache",
+          credentials: "include",
+        },
+      );
+      setloading(false);
+      return apiProfile.json();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    async function fethingHelmHub() {
+      const apiprofile = await Apiprofile();
+      setProfile({
+        full_name: apiprofile.data.full_name,
+        email: apiprofile.data.email,
+      });
+      const apiHelmHub = await ConditionHelmHub();
+      setHelms(apiHelmHub.data.data);
+    }
+    fethingHelmHub();
+  }, []);
+
+  if (loading) {
+    return (
+      <>
+        <div className="flex min-h-screen items-center justify-center mx-auto w-screen">
+          <Spinner className="size-10 text-sky-400" />
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <Sidebar>
@@ -58,7 +135,7 @@ export default function Page() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="bg-white">
                 <SidebarMenuButton>
-                  <User2 /> Mikaela
+                  <User2 /> {profile.full_name || "quets"}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -114,32 +191,20 @@ export default function Page() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {ConfigDataHelms.map((item) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                {helm?.map((item) => (
                   <Card
                     key={item.id}
-                    className="cursor-pointer hover:shadow-lg transition-shadow border"
+                    className="cursor-pointer hover:shadow-lg transition border hover:scale-110 hover:transition"
                   >
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-foreground">
-                          {item.helm_name}
+                          {item.helmet_name}
                         </span>
                         <p>{item.status}</p>
                       </div>
                       <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Type : </span>
-                          <span className="font-medium text-foreground">
-                            {item.type}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Size : </span>
-                          <span className="font-medium text-foreground">
-                            {item.size}
-                          </span>
-                        </div>
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">
                             Condition :{" "}
