@@ -37,7 +37,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ConfigDataDumy } from "../config/ConfigDataUsers";
+import { useEffect, useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
 export default function Page() {
+  const [loading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchingManage() {
+      setIsLoading(false);
+    }
+    fetchingManage();
+  }, []);
+
+  if (loading) {
+    <>
+      <div className="flex container min-h-screen justify-center items-center mx-auto w-screen">
+        <Spinner className="size-10 text-sky-400" />
+      </div>
+    </>;
+  }
   return (
     <>
       <Sidebar>
