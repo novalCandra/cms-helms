@@ -1,7 +1,13 @@
 "use client";
 import Navbar from "@/components/common/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -22,15 +28,17 @@ import {
 } from "@/components/ui/table";
 import {
   Calendar,
+  Check,
   Hammer,
   Hand,
+  HandHelping,
   HardHat,
+  ThumbsUp,
   Undo2,
   WalletCardsIcon,
   Warehouse,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import {
@@ -49,18 +57,33 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Home from "@/app/page";
 import { ToastContainer, toast } from "react-toastify";
+import Cookies from "js-cookie";
 type TypeHelms = {
   helmet_name: string;
   condition: string;
   status: string;
   daily_price: string;
 };
+
+type BorrowedHelms = {
+  id: number;
+  return_date: string;
+  borrow_date: string;
+  helmet_id: number;
+  totalBorrowed: number;
+  helm: {
+    id: number;
+    helmet_name: string;
+  };
+};
+
 export default function Page() {
   const navigate = useRouter();
   const [isModelOpen, setModalOpen] = useState(false);
+  const [borrowed, setBorrowed] = useState<BorrowedHelms | null>(null);
   const [loading, setIsLoading] = useState(true);
   const [avaible, setAvaible] = useState<TypeHelms[]>([]);
-
+  const [display, setDisplay] = useState<boolean>(false);
   const form = useForm<z.infer<typeof SchemaBorrowed>>({
     resolver: zodResolver(SchemaBorrowed),
     defaultValues: {
@@ -122,14 +145,57 @@ export default function Page() {
         credentials: "include",
         body: JSON.stringify(values),
       });
+      Cookies.set("borrowed", "true");
       toast.success("Sucess Borrwoed Helms");
       Borrowed.json();
       form.reset();
-      setModalOpen(false)
+      setModalOpen(false);
+      setDisplay(true);
       console.log("check");
     } catch (error) {
       toast.error("error");
       console.error(error);
+    }
+  }
+
+  async function BorrowedHemlms() {
+    const token = Cookies.get("token");
+    try {
+      const apiDataHelmHub = await fetch(
+        `http://127.0.0.1:8000/api/v1/borroed/profileMe`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-cache",
+          credentials: "include",
+        },
+      );
+      return apiDataHelmHub.json();
+    } catch (error) {
+      toast.error("tidak bisa mengembalikan helms");
+      console.error(error);
+    }
+  }
+
+  async function ReturnBorrowes(id: number | undefined) {
+    const token = Cookies.get("token");
+    try {
+      await fetch(`http://127.0.0.1:8000/api/v1/borroed/${id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-cache",
+        credentials: "include",
+      });
+      Cookies.set("borrowed", "false");
+      setDisplay(false);
+      toast.success("Successfully Returning a Helmet");
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to return a helmet.");
     }
   }
 
@@ -143,9 +209,22 @@ export default function Page() {
       const dataHelms = await ApiHelms();
       setAvaible(dataHelms.data.data);
       setIsLoading(false);
+      const status = Cookies.get("borrowed");
+      if (status === "true") {
+        setDisplay(true);
+      } else {
+        setDisplay(false);
+      }
     }
-
     fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    async function FetchingData() {
+      const borrowed = await BorrowedHemlms();
+      setBorrowed(borrowed.data);
+    }
+    FetchingData();
   }, []);
 
   const OnLogout = async (): Promise<void> => {
@@ -206,7 +285,7 @@ export default function Page() {
                     <HardHat className="w-8 h-8 text-sky-600" />
                     <div>
                       <p className="text-2xl font-bold text-foreground">
-                        HLM-003
+                        {borrowed?.helm?.helmet_name || "Not Helment"}
                       </p>
                       <p className="text-muted-foreground">
                         Currently Borrowed
@@ -217,7 +296,7 @@ export default function Page() {
                   <div className="flex items-center gap-4">
                     <Calendar size={20} className="text-gray-400" />
                     <p className="text-base text-muted-foreground">
-                      Return by: 2024-02-10
+                      Return by: {borrowed?.return_date || "not date"}
                     </p>
                   </div>
                 </div>
@@ -239,8 +318,12 @@ export default function Page() {
                       <HardHat className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">1</p>
-                      <p className="text-base text-foreground">All time</p>
+                      <p className="text-2xl font-bold">
+                        {borrowed?.totalBorrowed || 0}
+                      </p>
+                      <p className="text-muted-foreground text-base">
+                        Total Helmets Borrowed
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -254,134 +337,159 @@ export default function Page() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Quick Actions
                 </CardTitle>
+                <CardDescription>
+                  Borrow or return helmets with a single click.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Dialog open={isModelOpen} onOpenChange={setModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full" size={"lg"}>
-                      <HardHat className="w-4 h-4 mr-2" />
-                      Borrow Helmet
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Borrow a Helmet</DialogTitle>
-                    </DialogHeader>
-                    <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(PostBorrowed)}
-                        className="space-y-6"
-                      >
-                        <div className="space-y-4 mt-4">
-                          <div className="space-y-2">
-                            <Label>Select Helmet</Label>
-                            <FormField
-                              control={form.control}
-                              name="helmet_id"
-                              render={({ field }) => (
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Choose A Helments" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="6">KYT</SelectItem>
-                                    <SelectItem value="2">
-                                      Shoies X16
-                                    </SelectItem>
-                                    <SelectItem value="8">
-                                      Arai RX-7V
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
+                {!display && (
+                  <Dialog open={isModelOpen} onOpenChange={setModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="w-full" size={"lg"}>
+                        <HardHat className="w-4 h-4 mr-2" />
+                        Borrow Helmet
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Borrow a Helmet</DialogTitle>
+                      </DialogHeader>
+                      <Form {...form}>
+                        <form
+                          onSubmit={form.handleSubmit(PostBorrowed)}
+                          className="space-y-6"
+                        >
+                          <div className="space-y-4 mt-4">
+                            <div className="space-y-2">
+                              <Label>Select Helmet</Label>
+                              <FormField
+                                control={form.control}
+                                name="helmet_id"
+                                render={({ field }) => (
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Choose A Helments" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="6">KYT</SelectItem>
+                                      <SelectItem value="2">
+                                        Shoies X16
+                                      </SelectItem>
+                                      <SelectItem value="8">
+                                        Arai RX-7V
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Borrow Date</Label>
+                              <FormField
+                                control={form.control}
+                                name="borrow_date"
+                                render={({ field }) => (
+                                  <Input
+                                    {...field}
+                                    type="date"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                  />
+                                )}
+                              />
+                            </div>
+                            <div className="spave-y-2">
+                              <Label>Return Schedule</Label>
+                              <FormField
+                                control={form.control}
+                                name="return_date"
+                                render={({ field }) => (
+                                  <Input
+                                    {...field}
+                                    type="date"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                  />
+                                )}
+                              />
+                            </div>
+                            {/* <DialogClose asChild> */}
+                            <Button className="w-full" type="submit">
+                              <WalletCardsIcon className="w-7 h-7 text-white" />
+                              Confirm Borrow
+                            </Button>
+                            {/* </DialogClose> */}
                           </div>
-                          <div className="space-y-2">
-                            <Label>Borrow Date</Label>
-                            <FormField
-                              control={form.control}
-                              name="borrow_date"
-                              render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  type="date"
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                />
-                              )}
-                            />
-                          </div>
-                          <div className="spave-y-2">
-                            <Label>Return Schedule</Label>
-                            <FormField
-                              control={form.control}
-                              name="return_date"
-                              render={({ field }) => (
-                                <Input
-                                  {...field}
-                                  type="date"
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                />
-                              )}
-                            />
-                          </div>
-                          {/* <DialogClose asChild> */}
-                          <Button className="w-full" type="submit">
-                            <WalletCardsIcon className="w-7 h-7 text-white" />
-                            Confirm Borrow
-                          </Button>
-                          {/* </DialogClose> */}
-                        </div>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                )}
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant={"outline"} className="w-full" size={"lg"}>
-                      <Undo2 className="w-4 h-4 mr-2" />
-                      Return Helments
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Return Helmet</DialogTitle>
-                      <DialogDescription>Returning a Helms</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                      <div className="p-4 bg-muted rounded-lg space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Helmet ID:
-                          </span>
-                          <span className="font-medium">HLM-003</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Borrowed on:
-                          </span>
-                          <span className="font-medium">2024-02-01</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Due date:
-                          </span>
-                          <span className="font-medium">2024-02-10</span>
-                        </div>
-                      </div>
-                      <DialogClose asChild>
-                        <Button type="submit" className="w-full">
-                          Confirm Return
+                {display && (
+                  <>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className="w-full"
+                          size={"lg"}
+                        >
+                          <Undo2 className="w-4 h-4 mr-2" />
+                          Return Helments
                         </Button>
-                      </DialogClose>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Return Helmet</DialogTitle>
+                          <DialogDescription>
+                            Returning a Helms
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 mt-4">
+                          <div className="p-4 bg-muted rounded-lg space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                Helmet name
+                              </span>
+                              <span className="font-medium">
+                                {borrowed?.helm.helmet_name}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                Borrowed on:
+                              </span>
+                              <span className="font-medium">
+                                {borrowed?.borrow_date}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">
+                                Return Date:
+                              </span>
+                              <span className="font-medium">
+                                {borrowed?.return_date}
+                              </span>
+                            </div>
+                          </div>
+                          <DialogClose asChild>
+                            <Button
+                              type="submit"
+                              className="w-full"
+                              onClick={() => ReturnBorrowes(borrowed?.id)}
+                            >
+                              Confirm Return
+                            </Button>
+                          </DialogClose>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </>
+                )}
               </CardContent>
             </Card>
             {/* end borrows */}
@@ -413,7 +521,38 @@ export default function Page() {
                         <TableCell>{index + 1}</TableCell>
 
                         <TableCell>{item.helmet_name}</TableCell>
-                        <TableCell>{item.condition}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              item.condition === "very_good"
+                                ? "default"
+                                : item.condition == "good"
+                                  ? "outline"
+                                  : item.condition === "excellent"
+                                    ? "ghost"
+                                    : "default"
+                            }
+                          >
+                            {item.condition === "very_good" ? (
+                              <>
+                                <ThumbsUp className="w-7 h-7" />
+                                {item.condition}
+                              </>
+                            ) : item.condition === "good" ? (
+                              <>
+                                <Check className="w-7 h-7" />
+                                {item.condition}
+                              </>
+                            ) : item.condition === "excellent" ? (
+                              <>
+                                <HandHelping className="w-7 h-7" />
+                                {item.condition}
+                              </>
+                            ) : (
+                              <Home />
+                            )}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-blue-400">
                           {item.daily_price}
                         </TableCell>
@@ -456,7 +595,7 @@ export default function Page() {
               </div>
             </CardContent>
           </Card>
-          {/* end table Avaible Helments */}{" "}
+          {/* end table Avaible Helments */}
         </main>
       </div>
       <ToastContainer position="top-right" autoClose={2000} />
