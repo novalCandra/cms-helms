@@ -1,5 +1,4 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ToastContainer, toast } from "react-toastify";
 import React from "react";
 
 export default function layout({ children }: { children: React.ReactNode }) {
