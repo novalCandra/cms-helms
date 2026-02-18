@@ -160,6 +160,7 @@ export default function Page() {
       toast.success("sucess Delete Data");
     } catch (error) {
       toast.error("gagal Deleet Data");
+      console.error(error);
     }
   }
 
