@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { Spinner } from "@/components/ui/spinner";
+import { useRouter } from "next/navigation";
 type TypeHelms = {
   id: number;
   helmet_name: string;
@@ -30,6 +31,7 @@ type TypeHelms = {
   condition: string;
 };
 export default function Page() {
+  const navigate = useRouter();
   const [helm, setHelms] = useState<TypeHelms[]>([]);
   const [search, setSearch] = useState("");
   const [profile, setProfile] = useState({
@@ -85,6 +87,20 @@ export default function Page() {
       console.error(error);
     }
   }
+
+  const OnLogout = async (): Promise<void> => {
+    const token = Cookies.get("token");
+    await fetch(`http://127.0.0.1:8000/api/v1/auth/logout`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-cache",
+      credentials: "include",
+    });
+    navigate.push("auth/login");
+    Cookies.remove("token");
+  };
 
   useEffect(() => {
     async function fethingHelmHub() {
@@ -153,11 +169,7 @@ export default function Page() {
                   variant="destructive"
                   className="w-56 rounded-[10px] cursor-pointer"
                 >
-                  <span
-                  //   onClick={logoutProfile}
-                  >
-                    Sign out
-                  </span>
+                  <span onClick={OnLogout}>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
