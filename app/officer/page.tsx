@@ -65,10 +65,22 @@ export default function Page() {
     full_name: "",
     email: "",
   });
-
+  const [search, setSearch] = useState("");
+  const [select, setSelect] = useState("all");
   const [active, setActive] = useState<TypeActiveBorrowed[]>();
-
   const [loading, setIsLoading] = useState<boolean>(true);
+
+  // filtedred data, search
+  const filteredData = active?.filter((item) => {
+    const matchSearch =
+      search.trim() === "" ||
+      `${item.users.full_name} ${item.helm.helmet_name}`
+        .toLowerCase()
+        .includes(search.toLowerCase());
+    const matchStatus = select === "all" || item.status === select;
+
+    return matchSearch && matchStatus;
+  });
 
   async function Apiprofile() {
     const token = Cookies.get("token");
@@ -120,7 +132,6 @@ export default function Page() {
       cache: "no-cache",
       credentials: "include",
     });
-    window.location.reload();
     navigate.push("auth/login");
     Cookies.remove("token");
   };
@@ -263,6 +274,7 @@ export default function Page() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="Search by user or helmet..."
+                      onChange={(e) => setSearch(e.target.value)}
                       className="pl-9 w-full sm:w-64"
                     />
                   </div>
@@ -295,7 +307,7 @@ export default function Page() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {active?.map((item, index) => (
+                    {filteredData?.map((item, index) => (
                       <TableRow key={item.id}>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>{item.users.full_name}</TableCell>

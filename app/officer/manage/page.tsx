@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Ban,
+  CheckLine,
   ChevronUp,
   HardHat,
   Menu,
-  Search,
   User,
   User2,
 } from "lucide-react";
@@ -36,25 +36,118 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ConfigDataDumy } from "../config/ConfigDataUsers";
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
-export default function Page() {
-  const [loading, setIsLoading] = useState(true);
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import { toast, ToastContainer } from "react-toastify";
 
+type TypeUsers = {
+  id: number;
+  full_name: string;
+  email: string;
+  phone_number: string;
+  delete_at: string | undefined;
+};
+export default function Page() {
+  const navigate = useRouter();
+  const [loading, setIsLoading] = useState<boolean>(true);
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+  });
+  const [users, setusers] = useState<TypeUsers[]>([]);
+
+  async function ApiProfile() {
+    const token = Cookies.get("token");
+    try {
+      const apiProfle = await fetch(
+        `http://127.0.0.1:8000/api/v1/auth/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-cache",
+          credentials: "include",
+        },
+      );
+
+      return apiProfle.json();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function apiManage() {
+    const token = Cookies.get("token");
+    try {
+      const Manage = await fetch(`http://127.0.0.1:8000/api/v1/manage`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-cache",
+        credentials: "include",
+      });
+      return Manage.json();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function ApiBanned(id: number) {
+    const token = Cookies.get("token");
+    try {
+      await fetch(`http://127.0.0.1:8000/api/v1/manage/${id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setusers((prev) => prev.filter((item) => id !== item.id));
+      toast.success("successfully banned users");
+    } catch (error) {
+      console.error(error);
+      toast.error("cannot ban users");
+    }
+  }
+
+  const OnLogout = async (): Promise<void> => {
+    const token = Cookies.get("token");
+    await fetch(`http://127.0.0.1:8000/api/v1/auth/logout`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-cache",
+      credentials: "include",
+    });
+    navigate.push("auth/login");
+    Cookies.remove("token");
+  };
   useEffect(() => {
     async function fetchingManage() {
+      const apidataProfile = await ApiProfile();
+      setForm({
+        full_name: apidataProfile.data.full_name,
+        email: apidataProfile.data.email,
+      });
+
+      const apiDataManage = await apiManage();
+      setusers(apiDataManage.data);
       setIsLoading(false);
     }
     fetchingManage();
   }, []);
 
   if (loading) {
-    <>
-      <div className="flex container min-h-screen justify-center items-center mx-auto w-screen">
-        <Spinner className="size-10 text-sky-400" />
-      </div>
-    </>;
+    return (
+      <>
+        <div className="flex container min-h-screen justify-center items-center mx-auto w-screen">
+          <Spinner className="size-10 text-sky-400" />
+        </div>
+      </>
+    );
   }
   return (
     <>
@@ -92,7 +185,7 @@ export default function Page() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="bg-white">
                 <SidebarMenuButton>
-                  <User2 /> Mikaela
+                  <User2 /> {form.full_name || "quest"}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -101,10 +194,13 @@ export default function Page() {
                   variant="destructive"
                   className="w-56 rounded-[10px] cursor-pointer"
                 >
-                  <span
-                  //   onClick={logoutProfile}
-                  >
-                    Sign out
+                  <span>
+                    <Button
+                      onClick={OnLogout}
+                      className="w-full bg-transparent text-black hover:bg-transparent cursor-pointer"
+                    >
+                      Sign out
+                    </Button>
                   </span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -114,7 +210,7 @@ export default function Page() {
       </Sidebar>
       <div className="container min-w-96">
         {/* Content */}
-        <header className="bg-card border-b w-412 border-border px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+        <header className="bg-card border-b w-400 border-border px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <Button variant={"ghost"} size={"icon"} className="lg:hidden">
               <Menu />
@@ -139,13 +235,6 @@ export default function Page() {
                   <User className="w-5 h-5 text-primary" />
                   User Managements
                 </CardTitle>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search users..."
-                    className="pl-9 w-full sm:w-64"
-                  />
-                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -153,27 +242,36 @@ export default function Page() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>User Name</TableHead>
-                      <TableHead>Total Borrows</TableHead>
-                      <TableHead>Active Borrows</TableHead>
-                      <TableHead>Late Returns</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Number</TableHead>
+                      <TableHead>Full name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone Number</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {ConfigDataDumy.map((item) => (
+                    {users?.map((item, index) => (
                       <TableRow key={item.id}>
-                        <TableCell>{item.username}</TableCell>
-                        <TableCell>{item.total_borrows}</TableCell>
-                        <TableCell>{item.active_borrow}</TableCell>
-                        <TableCell>{item.late_return}</TableCell>
-                        <TableCell>{item.status}</TableCell>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{item.full_name}</TableCell>
+                        <TableCell>{item.email}</TableCell>
+                        <TableCell>{item.phone_number}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant={"destructive"}>
-                            <Ban className="w-4 h-4" />
-                            {item.action}
-                          </Button>
+                          {item.delete_at ? (
+                            <Button variant={"secondary"} type="button">
+                              <CheckLine className="w-4 h-4" />
+                              Success
+                            </Button>
+                          ) : (
+                            <Button
+                              variant={"destructive"}
+                              type="submit"
+                              onClick={() => ApiBanned(item.id)}
+                            >
+                              <Ban className="w-4 h-4" />
+                              Banned
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -186,6 +284,7 @@ export default function Page() {
         {/* end users Managements */}
       </div>
       {/* End Content */}
+      <ToastContainer position="top-right" autoClose={50000} />
     </>
   );
 }

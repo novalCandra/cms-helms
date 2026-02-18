@@ -31,6 +31,7 @@ type TypeHelms = {
 };
 export default function Page() {
   const [helm, setHelms] = useState<TypeHelms[]>([]);
+  const [search, setSearch] = useState("");
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -55,6 +56,14 @@ export default function Page() {
       console.error(error);
     }
   }
+
+  const filteredData = helm.filter((item) => {
+    const matchSearch =
+      search.trim() === "" ||
+      `${item.helmet_name}`.toLowerCase().includes(search.toLowerCase());
+
+    return matchSearch;
+  });
 
   async function Apiprofile() {
     const token = Cookies.get("token");
@@ -185,6 +194,7 @@ export default function Page() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     className="pl-9 w-full sm:w-64"
+                    onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search helmets..."
                   />
                 </div>
@@ -192,7 +202,7 @@ export default function Page() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-                {helm?.map((item) => (
+                {filteredData?.map((item) => (
                   <Card
                     key={item.id}
                     className="cursor-pointer hover:shadow-lg transition border hover:scale-110 hover:transition"
