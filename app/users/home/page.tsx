@@ -69,7 +69,7 @@ type BorrowedHelms = {
   id: number;
   return_date: string;
   borrow_date: string;
-  helmet_id: number;
+  helm_id: number;
   totalBorrowed: number;
   helm: {
     id: number;
@@ -87,7 +87,7 @@ export default function Page() {
   const form = useForm<z.infer<typeof SchemaBorrowed>>({
     resolver: zodResolver(SchemaBorrowed),
     defaultValues: {
-      helmet_id: "",
+      helm_id: "",
       borrow_date: "",
       return_date: "",
     },
@@ -182,16 +182,22 @@ export default function Page() {
   async function ReturnBorrowes(id: number | undefined) {
     const token = Cookies.get("token");
     try {
-      await fetch(`http://127.0.0.1:8000/api/v1/borroed/${id}`, {
+      const respon = await fetch(`http://127.0.0.1:8000/api/v1/return/${id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
         cache: "no-cache",
         credentials: "include",
       });
       Cookies.set("borrowed", "false");
-      setDisplay(false);
+      const data = await respon.json();
+      if (data.invoice_url) {
+        window.location.href = data.invoice_url;
+      } else {
+        toast.error("Unable to return a helmet.");
+      }
       toast.success("Successfully Returning a Helmet");
     } catch (error) {
       console.error(error);
@@ -211,6 +217,8 @@ export default function Page() {
       setIsLoading(false);
       const status = Cookies.get("borrowed");
       if (status === "true") {
+        setDisplay(true);
+      } else if (status === "") {
         setDisplay(true);
       } else {
         setDisplay(false);
@@ -364,7 +372,7 @@ export default function Page() {
                               <Label>Select Helmet</Label>
                               <FormField
                                 control={form.control}
-                                name="helmet_id"
+                                name="helm_id"
                                 render={({ field }) => (
                                   <Select
                                     value={field.value}
