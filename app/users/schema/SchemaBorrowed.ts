@@ -1,7 +1,7 @@
 import z from "zod";
 
 const SchemaBorrowed = z.object({
-  helmet_id: z.string(),
+  helm_id: z.string(),
   borrow_date: z.string(),
   return_date: z.string(),
 });
