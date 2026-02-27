@@ -186,32 +186,6 @@ export default function Page() {
                       );
                     }}
                   />
-                  {/* 
-                  <FormField
-                    control={form.control}
-                    name="confirmpassword"
-                    render={({ field }) => {
-                      return (
-                        <FormItem>
-                          <FormLabel>confirm password</FormLabel>
-                          <FormControl>
-                            <InputGroup>
-                              <InputGroupInput
-                                type="password"
-                                placeholder="Enter Your Confirm Password"
-                                {...field}
-                              />
-                              <InputGroupAddon>
-                                <Eye />
-                              </InputGroupAddon>
-                            </InputGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }}
-                  /> */}
-
                   <div className="flex justify-center text-center">
                     <Checkbox className="bg-gray-300 mt-1 mr-3" />
                     <p>I agree to the Terms & Conditions and Privacy Policy</p>
