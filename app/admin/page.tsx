@@ -152,7 +152,7 @@ export default function Page() {
   if (loading) {
     return (
       <>
-        <div className="flex min-h-screen justify-center items-center mx-auto w-[100vw]">
+        <div className="flex min-h-screen justify-center items-center mx-auto w-screen">
           <Spinner className="size-10 text-sky-400" />
         </div>
       </>
@@ -203,7 +203,7 @@ export default function Page() {
           </div>
         </SidebarFooter>
       </Sidebar>
-      <div className="container min-h-full w-[250rem]">
+      <div className="container min-h-full w-1000">
         <Navbar />
         <div className="text-start px-10 py-1">
           <h2 className="text-xl font-bold">Welcome to Admin</h2>
@@ -223,7 +223,7 @@ export default function Page() {
           <Card className="border-0 shadow-md lg:w-64 md:w-40">
             <CardHeader className="flex justify-between items-center">
               <CardTitle>
-                <h3 className="text-md">Total Helmets</h3>
+                <h3 className="text-md">Total Borrowed</h3>
                 <span className="text-2xl">10</span>
               </CardTitle>
               <div>
