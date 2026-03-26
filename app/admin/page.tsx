@@ -31,152 +31,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ConfigSidebar from "./config/configSidebar";
-import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import Cookies from "js-cookie";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
-
-type TypeBorrowes = {
-  id: number;
-  users: users;
-  helm: helm;
-  full_name: string;
-  helmet_name: string;
-  borrow_date: string;
-  status: string;
-  return_date: string;
-};
-
-type users = {
-  full_name: string;
-};
-
-type helm = {
-  helmet_name: string;
-};
-
-type StatsBorrowed = {
-  return_stats: number;
-  latenned_stats: number;
-};
+import { useAuth } from "@/hooks/useRoute";
+import { useDashboard } from "@/hooks/useDashboard";
+import Image from "next/image";
 
 export default function Page() {
-  const navigate = useRouter();
-  const [profile, setprofile] = useState({
-    full_name: "",
-    email: "",
-  });
-  const [helms, setHelms] = useState([]);
-  const [loading, isloading] = useState(true);
-  const [borrowed, setBorrowed] = useState<TypeBorrowes[]>([]);
-  const [totalBorrowed, settotalBorrowed] = useState<number>();
-  const [statsBorrowed, setStatsBorrowed] = useState<StatsBorrowed>({
-    return_stats: 0,
-    latenned_stats: 0,
-  });
-  async function apiProfile() {
-    const token = Cookies.get("token");
-    const responApiProvile = await fetch(
-      `http://127.0.0.1:8000/api/v1/auth/profile`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        cache: "no-cache",
-      },
-    );
-    return responApiProvile.json();
-  }
-
-  async function dataHelms() {
-    const token = Cookies.get("token");
-    const responApiHelms = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/helments?per_page=100`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        cache: "no-cache",
-      },
-    );
-
-    return responApiHelms.json();
-  }
-
-  async function DataStats() {
-    const token = Cookies.get("token");
-    const apiDataStats = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/borroed/stats`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        cache: "no-cache",
-      },
-    );
-    return apiDataStats.json();
-  }
-
-  async function BorrowedApi() {
-    const token = Cookies.get("token");
-    const apiBorrowed = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/borroed?per_page=100`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        cache: "no-cache",
-      },
-    );
-    return apiBorrowed.json();
-  }
-
-  const logoutProfile = async (): Promise<void> => {
-    const token = Cookies.remove("token");
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-      method: "POST",
-      headers: {
-        Authozation: `Bearer ${token}`,
-      },
-      credentials: "include",
-      cache: "no-cache",
-    });
-    navigate.push("/auth/login");
-    window.location.reload();
-  };
-  useEffect(() => {
-    async function fetchProfile() {
-      const profileAdmin = await apiProfile();
-      setprofile({
-        full_name: profileAdmin.data.full_name,
-        email: profileAdmin.data.email,
-      });
-      const AllHelms = await dataHelms();
-      const AllBorrowed = await BorrowedApi();
-      const DataSas = await DataStats();
-      setStatsBorrowed(DataSas.data);
-      setBorrowed(AllBorrowed.data.data);
-      settotalBorrowed(AllBorrowed.data.total);
-      setHelms(AllHelms.data.data);
-      setHelms(AllHelms.data.total);
-      isloading(false);
-    }
-
-    fetchProfile();
-  }, []);
-
+  const { logout } = useAuth();
+  const { profile, borrowed, helms, loading, statsBorrowed } = useDashboard();
   if (loading) {
     return (
       <>
@@ -224,7 +92,7 @@ export default function Page() {
                   variant="destructive"
                   className="w-56 rounded-[10px] cursor-pointer"
                 >
-                  <span onClick={logoutProfile}>Sign out</span>
+                  <span onClick={logout}>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -241,7 +109,7 @@ export default function Page() {
             <CardHeader className="flex justify-between items-center">
               <CardTitle>
                 <h3 className="text-md">Total Helmets</h3>
-                <span className="text-2xl">{helms}</span>
+                <span className="text-2xl">{helms.length}</span>
               </CardTitle>
               <div className="bg-sky-200 px-2 py-1 rounded-[5px]">
                 <HardHat className="w-7 h-7 text-blue-500" />
@@ -252,7 +120,7 @@ export default function Page() {
             <CardHeader className="flex justify-between items-center">
               <CardTitle>
                 <h3 className="text-md">Total Borrowed</h3>
-                <span className="text-2xl">{totalBorrowed}</span>
+                <span className="text-2xl">{borrowed?.length || 0}</span>
               </CardTitle>
               <div>
                 <Clock className="w-7 h-7" />
@@ -276,9 +144,6 @@ export default function Page() {
             <CardHeader className="flex justify-between items-center">
               <CardTitle>
                 <h3 className="text-md">Late Returns</h3>
-                <span className="text-2xl">
-                  {statsBorrowed?.latenned_stats || 0}
-                </span>
               </CardTitle>
               <div className="bg-red-200 px-2 py-1 rounded-[5px]">
                 <TriangleAlert className="w-7 h-7 text-red-600" />
@@ -319,14 +184,32 @@ export default function Page() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {borrowed?.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.users.full_name}</TableCell>
-                      <TableCell>{item.helm.helmet_name}</TableCell>
-                      <TableCell>{item.borrow_date}</TableCell>
-                      <TableCell>{item.status}</TableCell>
+                  {borrowed ? (
+                    borrowed?.map(
+                      ({ id, users, helm, borrow_date, status }) => (
+                        <TableRow key={id}>
+                          <TableCell>{users?.full_name ?? "-"}</TableCell>
+                          <TableCell>{helm?.helmet_name ?? "-"}</TableCell>
+                          <TableCell>{borrow_date ?? "-"}</TableCell>
+                          <TableCell>{status ?? "-"}</TableCell>
+                        </TableRow>
+                      ),
+                    )
+                  ) : (
+                    <TableRow className="mx-auto">
+                      <TableCell rowSpan={10}>
+                        <div className="flex flex-col mx-auto">
+                          <Image
+                            src={"/assets/not_found.png"}
+                            alt="not data"
+                            width={100}
+                            height={100}
+                            className="mx-auto"
+                          />
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
