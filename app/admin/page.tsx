@@ -60,6 +60,12 @@ type users = {
 type helm = {
   helmet_name: string;
 };
+
+type StatsBorrowed = {
+  return_stats: number;
+  latenned_stats: number;
+};
+
 export default function Page() {
   const navigate = useRouter();
   const [profile, setprofile] = useState({
@@ -68,8 +74,12 @@ export default function Page() {
   });
   const [helms, setHelms] = useState([]);
   const [loading, isloading] = useState(true);
-  const [borrowed, setBorrowed] = useState<TypeBorrowes[]>();
-
+  const [borrowed, setBorrowed] = useState<TypeBorrowes[]>([]);
+  const [totalBorrowed, settotalBorrowed] = useState<number>();
+  const [statsBorrowed, setStatsBorrowed] = useState<StatsBorrowed>({
+    return_stats: 0,
+    latenned_stats: 0,
+  });
   async function apiProfile() {
     const token = Cookies.get("token");
     const responApiProvile = await fetch(
@@ -103,10 +113,25 @@ export default function Page() {
     return responApiHelms.json();
   }
 
+  async function DataStats() {
+    const token = Cookies.get("token");
+    const apiDataStats = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/borroed/stats`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        cache: "no-cache",
+      },
+    );
+    return apiDataStats.json();
+  }
+
   async function BorrowedApi() {
     const token = Cookies.get("token");
     const apiBorrowed = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/borroed`,
+      `${process.env.NEXT_PUBLIC_API_URL}/borroed?per_page=100`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -140,7 +165,10 @@ export default function Page() {
       });
       const AllHelms = await dataHelms();
       const AllBorrowed = await BorrowedApi();
-      setBorrowed(AllBorrowed.data);
+      const DataSas = await DataStats();
+      setStatsBorrowed(DataSas.data);
+      setBorrowed(AllBorrowed.data.data);
+      settotalBorrowed(AllBorrowed.data.total);
       setHelms(AllHelms.data.data);
       setHelms(AllHelms.data.total);
       isloading(false);
@@ -224,7 +252,7 @@ export default function Page() {
             <CardHeader className="flex justify-between items-center">
               <CardTitle>
                 <h3 className="text-md">Total Borrowed</h3>
-                <span className="text-2xl">10</span>
+                <span className="text-2xl">{totalBorrowed}</span>
               </CardTitle>
               <div>
                 <Clock className="w-7 h-7" />
@@ -235,7 +263,9 @@ export default function Page() {
             <CardHeader className="flex justify-between items-center">
               <CardTitle>
                 <h3 className="text-md">Available</h3>
-                <span className="text-2xl">5</span>
+                <span className="text-2xl">
+                  {statsBorrowed?.return_stats || 0}
+                </span>
               </CardTitle>
               <div className="bg-green-200 px-2 py-1 rounded-[5px]">
                 <CircleCheck className="w-7 h-7 text-green-500" />
@@ -246,7 +276,9 @@ export default function Page() {
             <CardHeader className="flex justify-between items-center">
               <CardTitle>
                 <h3 className="text-md">Late Returns</h3>
-                <span className="text-2xl">1</span>
+                <span className="text-2xl">
+                  {statsBorrowed?.latenned_stats || 0}
+                </span>
               </CardTitle>
               <div className="bg-red-200 px-2 py-1 rounded-[5px]">
                 <TriangleAlert className="w-7 h-7 text-red-600" />
