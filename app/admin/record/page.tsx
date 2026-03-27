@@ -1,5 +1,4 @@
 "use client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -14,13 +13,7 @@ import {
 import ConfigSidebar from "../config/configSidebar";
 import Navbar from "../components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ChevronUp,
-  ClipboardPenIcon,
-  MoreHorizontal,
-  Search,
-  User2,
-} from "lucide-react";
+import { ChevronUp, ClipboardPenIcon, Search, User2 } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
@@ -48,37 +41,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
-type TypeBorrowes = {
-  id: number;
-  users: users;
-  helm: helm;
-  full_name: string;
-  helmet_name: string;
-  borrow_date: string;
-  status: string;
-  return_date: string;
-};
-
-type users = {
-  full_name: string;
-};
-
-type helm = {
-  helmet_name: string;
-};
+import { useAuth } from "@/hooks/useRoute";
+import useRecord from "@/hooks/useRecord";
 
 export default function Page() {
-  const navigate = useRouter();
-  const [profile, setProfile] = useState({
-    full_name: "",
-    email: "",
-  });
-  const [loading, setIsLoading] = useState<boolean>(true);
-  const [borrowed, setIsBorrowed] = useState<TypeBorrowes[]>([]);
+  const { logout } = useAuth();
+
+  const { profile, borrowed, loading } = useRecord();
   const [search, setIsSearch] = useState("");
   const [select, setSelect] = useState("all");
 
@@ -91,68 +62,10 @@ export default function Page() {
     const selectStatus = select === "all" || item.status === select;
     return searchFilter && selectStatus;
   });
-  async function getProfile() {
-    const token = Cookies.get("token");
-    const apiProfile = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/auth/profile`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        cache: "no-cache",
-      },
-    );
-    return apiProfile.json();
-  }
-
-  async function AllBorrowing() {
-    const token = Cookies.get("token");
-    const ApiBorrowing = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/borroed`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        cache: "no-cache",
-      },
-    );
-
-    return ApiBorrowing.json();
-  }
-
-  const logoutProfile = async (): Promise<void> => {
-    const token = Cookies.remove("token");
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-      method: "POST",
-      headers: {
-        Authozation: `Bearer ${token}`,
-      },
-      credentials: "include",
-      cache: "no-cache",
-    });
-    navigate.push("/auth/login");
-    window.location.reload();
-  };
-  useEffect(() => {
-    async function BorrowingAll() {
-      const AllBorrowings = await AllBorrowing();
-      const Profile = await getProfile();
-      setProfile({
-        full_name: Profile.data.full_name,
-        email: Profile.data.email,
-      });
-      setIsBorrowed(AllBorrowings.data);
-      setIsLoading(false);
-    }
-    BorrowingAll();
-  }, []);
 
   if (loading) {
     return (
-      <div className="flex min-h-screen justify-center items-center mx-auto w-[100vw]">
+      <div className="flex min-h-screen justify-center items-center mx-auto w-screen">
         <Spinner className="size-10 text-sky-400" />
       </div>
     );
@@ -195,14 +108,14 @@ export default function Page() {
                   variant="destructive"
                   className="w-56 rounded-[10px] cursor-pointer"
                 >
-                  <span onClick={logoutProfile}>Sign out</span>
+                  <span onClick={logout}>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </SidebarFooter>
       </Sidebar>
-      <div className="container min-h-full w-[250rem]">
+      <div className="container min-h-full w-10000">
         <Navbar />
         <div className="flex items-center px-10 py-7">
           <Card className="w-full">

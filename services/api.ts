@@ -28,6 +28,7 @@ export async function getBorrowed() {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/borroed?per_page=100`,
     {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
@@ -55,4 +56,15 @@ export async function logoutAccount(token: string) {
     },
     credentials: "include",
   });
+}
+
+export async function AllBorrowed() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/borroed`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+    credentials: "include",
+  });
+  return res.json();
 }
