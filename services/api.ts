@@ -68,3 +68,24 @@ export async function AllBorrowed() {
   });
   return res.json();
 }
+
+export async function AllHelms() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/helments`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+    credentials: "include",
+  });
+  return res.json();
+}
+
+export async function deleteHelms(id: number) {
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/helments/:${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+    credentials: "include",
+  });
+}

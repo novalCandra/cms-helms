@@ -144,6 +144,9 @@ export default function Page() {
             <CardHeader className="flex justify-between items-center">
               <CardTitle>
                 <h3 className="text-md">Late Returns</h3>
+                <span className="text-2xl">
+                  {statsBorrowed.return_stats || 0}
+                </span>
               </CardTitle>
               <div className="bg-red-200 px-2 py-1 rounded-[5px]">
                 <TriangleAlert className="w-7 h-7 text-red-600" />
