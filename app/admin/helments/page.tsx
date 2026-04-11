@@ -15,6 +15,7 @@ import Navbar from "../components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChevronUp,
+  FileText,
   HardHat,
   MoreHorizontal,
   Search,
@@ -66,7 +67,7 @@ import {
 import { Field, FieldGroup, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToastContainer, toast } from "react-toastify";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useRoute";
 
 type TypeProduct = {
   id: number;
@@ -77,7 +78,7 @@ type TypeProduct = {
   late_fee_per_day: number;
 };
 export default function Page() {
-  const navigate = useRouter();
+  const { logout } = useAuth();
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -164,19 +165,36 @@ export default function Page() {
     }
   }
 
-  const logoutProfile = async (): Promise<void> => {
-    const token = Cookies.remove("token");
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-      method: "POST",
-      headers: {
-        Authozation: `Bearer ${token}`,
-      },
-      credentials: "include",
-      cache: "no-cache",
-    });
-    navigate.push("/auth/login");
-    window.location.reload();
-  };
+  // PDF
+  async function pdfData() {
+    const token = Cookies.get("token");
+    try {
+      const responPDF = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/helments/pdf`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+          cache: "no-cache",
+        },
+      );
+      const blob = await responPDF.blob();
+      const url = window.URL.createObjectURL(blob);
+      const idData = Math.floor(Math.random() * 0 + 1);
+      console.log(idData);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `helm-${idData}.pdf`;
+      a.remove();
+      a.click();
+      toast.success("Success Download PDF");
+    } catch (error) {
+      toast.error("tidak bisa download pdf");
+      console.error(error);
+    }
+  }
 
   // update Data
   async function updateData(id: number) {
@@ -202,7 +220,6 @@ export default function Page() {
         cache: "no-cache",
         body: JSON.stringify(payload),
       });
-      // setpageData((prev) => prev.map((item) => id !== item.id));
       setpageData((prev) =>
         prev.map((item) => (item.id === id ? { ...item, ...payload } : item)),
       );
@@ -225,23 +242,10 @@ export default function Page() {
     }
     setApiHelms();
   }, []);
-
-  useEffect(() => {
-    if (selectedHelms) {
-      setFormData({
-        helmet_name: selectedHelms.helmet_name,
-        condition: selectedHelms.condition,
-        status: selectedHelms.status,
-        daily_price: String(selectedHelms.daily_price),
-        late_fee_per_day: String(selectedHelms.late_fee_per_day),
-      });
-    }
-  }, [selectedHelms]);
-
   if (loading) {
     return (
       <>
-        <div className="flex min-h-screen justify-center items-center mx-auto w-[100vw]">
+        <div className="flex min-h-screen justify-center items-center mx-auto w-screen">
           <Spinner className="size-10 text-sky-400" />
         </div>
       </>
@@ -285,7 +289,7 @@ export default function Page() {
                   variant="destructive"
                   className="w-56 rounded-[10px] cursor-pointer"
                 >
-                  <span onClick={logoutProfile}>Sign out</span>
+                  <span onClick={logout}>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -325,6 +329,15 @@ export default function Page() {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                  <div
+                    onClick={pdfData}
+                    className="bg-red-500 px-10 md:px-5 sm:px-3 text-white cursor-pointer rounded-md text-center"
+                  >
+                    <div className="flex flex-row md:flex-none mt-2 md:justify-between gap-1">
+                      <FileText className="size-5" />
+                      <p>PDF</p>
+                    </div>
+                  </div>
                 </div>
               </CardTitle>
             </CardHeader>
@@ -346,7 +359,21 @@ export default function Page() {
                     <TableRow key={item.id}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{item.helmet_name}</TableCell>
-                      <TableCell>{item.status}</TableCell>
+                      <TableCell>
+                        <span
+                          className={
+                            item.status === "available"
+                              ? "bg-green-400 text-white px-3 rounded-2xl"
+                              : item.status === "available"
+                                ? "bg-yellow-300 text-black px-3 rounded-2xl"
+                                : item.status === "maintenance"
+                                  ? "bg-sky-500 text-white px-3 rounded-2xl"
+                                  : "bg-red-400 text-black px-3 rounded-2xl"
+                          }
+                        >
+                          {item.status}
+                        </span>
+                      </TableCell>
                       <TableCell>{item.condition}</TableCell>
                       <TableCell>Rp.{item.daily_price}</TableCell>
                       <TableCell>Rp.{item.late_fee_per_day}</TableCell>
@@ -400,7 +427,7 @@ export default function Page() {
                           open={showNewDialog}
                           onOpenChange={setShowNewDialog}
                         >
-                          <DialogContent className="sm:max-w-[425px] bg-[#FCF8F8]">
+                          <DialogContent className="sm:max-w-106.25 bg-[#FCF8F8]">
                             <DialogHeader>
                               <DialogTitle>Update Data Helms</DialogTitle>
                               <DialogDescription>
