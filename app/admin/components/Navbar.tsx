@@ -63,13 +63,12 @@ export default function Navbar() {
           body: JSON.stringify(values),
         },
       );
-
       apiAddHelms.json();
       toast.success("Success Add Helms");
+      setOpenModal(false);
       form.reset();
-      setOpenModal(true);
     } catch (error) {
-      toast.error(`${error} add Helms`);
+      toast.error(`Isi data yang benar`);
       console.log(error);
     }
   }
