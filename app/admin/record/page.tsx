@@ -161,14 +161,15 @@ export default function Page() {
                     <TableHead>Helments</TableHead>
                     <TableHead>Borrow Date</TableHead>
                     <TableHead>Return Date</TableHead>
-                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredData.map((item, index) => (
                     <TableRow key={item.id}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell>{item.users.full_name}</TableCell>
+                      <TableCell>
+                        {item.users?.full_name ? "Quest" : "-"}
+                      </TableCell>
                       <TableCell>{item.helm.helmet_name}</TableCell>
                       <TableCell>{item.borrow_date}</TableCell>
                       <TableCell>{item.return_date}</TableCell>
