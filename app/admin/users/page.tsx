@@ -91,12 +91,12 @@ export default function PageUsers() {
           body: JSON.stringify(values),
         },
       );
-      const dataUsers = await formDataUsers.json();
 
+      const DataUsers = await formDataUsers.json();
+      setDatausers((prev) => [...prev, DataUsers]);
       form.reset();
-      setDatausers((prev) => [...prev, dataUsers]);
-      toast.success("Success Create Users");
       setModal(false);
+      window.location.reload();
     } catch (error) {
       toast.error("Not Create users");
       console.error(error);
@@ -137,7 +137,7 @@ export default function PageUsers() {
         cache: "no-cache",
       });
       setDatausers((prev) => prev.filter((item) => id !== item.id));
-      window.location.reload();
+      toast.success("success delete data users");
     } catch (error) {
       console.error(error);
       return toast.error("Error Delete Data users");
