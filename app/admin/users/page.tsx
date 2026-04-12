@@ -46,11 +46,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
-import { useParams } from "next/navigation";
+import z from "zod";
+import { Controller, useForm } from "react-hook-form";
+import { SchemaAddUsers } from "../schema/SchemaAddUsers";
+import { zodResolver } from "@hookform/resolvers/zod";
 export default function PageUsers() {
   type DataAllusers = {
     id: number;
@@ -58,20 +61,21 @@ export default function PageUsers() {
     email: string;
     phone_number: string;
   };
-
-  type TypeFormUsers = {
-    id: number;
-    full_name: string;
-    email: string;
-    phone_number: string;
-    password: string;
-  };
   const { logout } = useAuth();
   const { profile, loading } = useDashboard();
   const [datausers, setDatausers] = useState<DataAllusers[]>([]);
-  const [formUsers, setFormUsers] = useState<TypeFormUsers>();
   const [modal, setModal] = useState<boolean>(false);
-  async function PostUsers() {
+  const form = useForm<z.infer<typeof SchemaAddUsers>>({
+    resolver: zodResolver(SchemaAddUsers),
+    defaultValues: {
+      full_name: "",
+      email: "",
+      password: "",
+      phone_number: "",
+    },
+  });
+
+  async function PostUsers(values: z.infer<typeof SchemaAddUsers>) {
     const token = Cookies.get("token");
     try {
       const formDataUsers = await fetch(
@@ -84,11 +88,15 @@ export default function PageUsers() {
           },
           credentials: "include",
           cache: "no-cache",
+          body: JSON.stringify(values),
         },
       );
+      const dataUsers = await formDataUsers.json();
+
+      form.reset();
+      setDatausers((prev) => [...prev, dataUsers]);
       toast.success("Success Create Users");
       setModal(false);
-      return formDataUsers.json();
     } catch (error) {
       toast.error("Not Create users");
       console.error(error);
@@ -129,7 +137,7 @@ export default function PageUsers() {
         cache: "no-cache",
       });
       setDatausers((prev) => prev.filter((item) => id !== item.id));
-      toast.success("success delete data users");
+      window.location.reload();
     } catch (error) {
       console.error(error);
       return toast.error("Error Delete Data users");
@@ -209,68 +217,123 @@ export default function PageUsers() {
                 </div>
                 <div className="flex justify-between gap-5">
                   <Dialog open={modal} onOpenChange={setModal}>
-                    <form>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <Plus /> ADD USERS
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle className="text-start text-xl font-medium">
-                            Add USERS
-                          </DialogTitle>
-                          <DialogDescription>
-                            Create sebuah account users
-                          </DialogDescription>
-                        </DialogHeader>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus /> ADD USERS
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle className="text-start text-xl font-medium">
+                          Add USERS
+                        </DialogTitle>
+                        <DialogDescription>
+                          Create sebuah account users
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={form.handleSubmit(PostUsers)}>
                         <FieldGroup>
-                          <Field>
-                            <Label htmlFor="name">Name</Label>
-                            <Input
-                              id="name"
-                              name="name"
-                              type="text'"
-                              placeholder={"John due"}
-                            />
-                          </Field>
-                          <Field>
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                              id="email"
-                              name="email"
-                              type="email"
-                              placeholder={"john@gmail.com"}
-                            />
-                          </Field>
+                          <Controller
+                            name="full_name"
+                            control={form.control}
+                            render={({ field, fieldState }) => (
+                              <Field>
+                                <Label htmlFor={field.name}>Name</Label>
+                                <Input
+                                  {...field}
+                                  id="name"
+                                  name="name"
+                                  type="text"
+                                  aria-invalid={fieldState.invalid}
+                                  placeholder={"John due"}
+                                  autoComplete="off"
+                                  required
+                                />
+                                {fieldState.invalid && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )}
+                          />
+                          <Controller
+                            name="email"
+                            control={form.control}
+                            render={({ field, fieldState }) => (
+                              <Field>
+                                <Label htmlFor={field.name}>Email</Label>
+                                <Input
+                                  {...field}
+                                  id="email"
+                                  name="email"
+                                  type="email"
+                                  aria-invalid={fieldState.invalid}
+                                  placeholder={"john@gmail.com"}
+                                  required
+                                  autoComplete=""
+                                />
+                                {fieldState.error && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )}
+                          />
 
-                          <Field>
-                            <Label htmlFor="password">password</Label>
-                            <Input
-                              id="password"
-                              name="password"
-                              type="password"
-                              placeholder={"********"}
-                            />
-                          </Field>
-                          <Field>
-                            <Label htmlFor="phone_number">Phone Number</Label>
-                            <Input
-                              id="phone_number"
-                              name="phone_number"
-                              type="number"
-                              placeholder={"+62"}
-                            />
-                          </Field>
+                          <Controller
+                            name="password"
+                            control={form.control}
+                            render={({ field, fieldState }) => (
+                              <Field>
+                                <Label htmlFor={field.name}>password</Label>
+                                <Input
+                                  {...field}
+                                  id="password"
+                                  name="password"
+                                  type="password"
+                                  placeholder={"********"}
+                                  aria-invalid={fieldState.invalid}
+                                  required
+                                />
+                                {fieldState.error && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )}
+                          />
+
+                          <Controller
+                            name="phone_number"
+                            control={form.control}
+                            render={({ field, fieldState }) => (
+                              <Field>
+                                <Label htmlFor={field.name}>Phone Number</Label>
+                                <Input
+                                  {...field}
+                                  id="phone_number"
+                                  name="phone_number"
+                                  type="number"
+                                  placeholder={"+62"}
+                                  aria-invalid={fieldState.invalid}
+                                  required
+                                />
+                                {fieldState.error && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )}
+                          />
                         </FieldGroup>
                         <DialogFooter>
                           <DialogClose asChild>
-                            <Button variant={"ghost"}>Cancel</Button>
+                            <Button type="button" variant={"ghost"}>
+                              Cancel
+                            </Button>
                           </DialogClose>
-                          <Button variant={"destructive"}>Submit</Button>
+                          <Button type="submit" variant={"destructive"}>
+                            Submit
+                          </Button>
                         </DialogFooter>
-                      </DialogContent>
-                    </form>
+                      </form>
+                    </DialogContent>
                   </Dialog>
                 </div>
               </CardTitle>
