@@ -66,12 +66,12 @@ export default function Page() {
     email: "",
   });
   const [search, setSearch] = useState("");
-  const [select, setSelect] = useState("all");
-  const [active, setActive] = useState<TypeActiveBorrowed[]>();
+  const [select, SetSelect] = useState("all");
+  const [active, setActive] = useState<TypeActiveBorrowed[]>([]);
   const [loading, setIsLoading] = useState<boolean>(true);
 
   // filtedred data, search
-  const filteredData = active?.filter((item) => {
+  const filteredData = (active || []).filter((item) => {
     const matchSearch =
       search.trim() === "" ||
       `${item.users.full_name} ${item.helm.helmet_name}`
@@ -145,7 +145,7 @@ export default function Page() {
       });
       setIsLoading(false);
       const apiActive = await ActiveApi();
-      setActive(apiActive.data);
+      setActive(apiActive.data?.data);
     }
     fethingProfile();
   }, []);

@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -81,7 +80,7 @@ export default function Page() {
   async function apiManage() {
     const token = Cookies.get("token");
     try {
-      const Manage = await fetch(`http://127.0.0.1:8000/api/v1/manage`, {
+      const Manage = await fetch(`http://127.0.0.1:8000/api/v1/manage/banned`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
