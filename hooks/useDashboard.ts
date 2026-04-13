@@ -22,7 +22,6 @@ export function useDashboard() {
       ]);
 
       setProfile(profileRes.data);
-      console.log(profileRes.data.data);
       setHelms(helmsRes.data.data);
       setBorrowed(borrowedRes.data?.data);
 
