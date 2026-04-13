@@ -1,4 +1,11 @@
-import { HardHat, LayoutGrid, LucideIcon, NotebookPen, Settings, Users } from "lucide-react";
+import {
+  HardHat,
+  LayoutGrid,
+  LucideIcon,
+  NotebookPen,
+  Library,
+  Users,
+} from "lucide-react";
 
 type TypeSidebar = {
   id: number;
@@ -34,9 +41,9 @@ const ConfigSidebar: TypeSidebar[] = [
   },
   {
     id: 5,
-    title: "Settings",
-    url: "/setting",
-    icon: Settings,
+    title: "Categories",
+    url: "/admin/categories",
+    icon: Library,
   },
 ];
 
