@@ -52,7 +52,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
 import z from "zod";
 import { Controller, useForm } from "react-hook-form";
-import { SchemaAddUsers } from "../schema/SchemaAddUsers";
+import { SchemaAddUsers, UpdateSchemaAddUsers } from "../schema/SchemaAddUsers";
 import { zodResolver } from "@hookform/resolvers/zod";
 export default function PageUsers() {
   type DataAllusers = {
@@ -73,6 +73,14 @@ export default function PageUsers() {
       password: "",
       phone_number: "",
     },
+  });
+
+  // Statte Update data
+  const [selectedUser, setSelectedUser] = useState<DataAllusers | null>(null);
+  const [modalUpdate, setModalUpdate] = useState<boolean>(false);
+
+  const formUpdate = useForm<z.infer<typeof UpdateSchemaAddUsers>>({
+    resolver: zodResolver(UpdateSchemaAddUsers),
   });
 
   async function PostUsers(values: z.infer<typeof SchemaAddUsers>) {
@@ -124,6 +132,39 @@ export default function PageUsers() {
     }
   }
 
+  async function UpdateData(values: z.infer<typeof UpdateSchemaAddUsers>) {
+    if (!selectedUser) return;
+    try {
+      const token = Cookies.get("token");
+      await fetch(`http://127.0.0.1:8000/api/v1/manage/${selectedUser?.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+
+        cache: "no-cache",
+        body: JSON.stringify(values),
+      });
+      setModalUpdate(false);
+
+      setDatausers((prev) =>
+        prev.map((user) =>
+          user.id === selectedUser.id
+            ? {
+                ...user,
+                full_name: values.full_name,
+                email: values.email,
+                phone_number: values.phone_number,
+              }
+            : user,
+        ),
+      );
+      toast.success("Success Update Users");
+    } catch (error) {
+      console.error(error);
+    }
+  }
   async function DeleteUsers(id: number) {
     const token = Cookies.get("token");
     try {
@@ -328,7 +369,88 @@ export default function PageUsers() {
                               Cancel
                             </Button>
                           </DialogClose>
-                          <Button type="submit" variant={"destructive"}>
+                          <Button type="button" variant={"destructive"}>
+                            Submit
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={modalUpdate} onOpenChange={setModalUpdate}>
+                    <DialogContent className="sm:max-w-sm">
+                      <DialogHeader>
+                        <DialogTitle>Edit user</DialogTitle>
+                        <DialogDescription>
+                          Mengedit data Users
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={formUpdate.handleSubmit(UpdateData)}>
+                        <FieldGroup>
+                          <Controller
+                            name="full_name"
+                            control={formUpdate.control}
+                            render={({ field, fieldState }) => (
+                              <Field>
+                                <Label htmlFor={field.name}>Name</Label>
+                                <Input {...field} placeholder={"John due"} />
+                                {fieldState.invalid && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )}
+                          />
+
+                          <Controller
+                            name="email"
+                            control={formUpdate.control}
+                            render={({ field, fieldState }) => (
+                              <Field>
+                                <Label htmlFor={field.name}>Email</Label>
+                                <Input
+                                  {...field}
+                                  type="email"
+                                  aria-invalid={fieldState.invalid}
+                                  placeholder={"john@gmail.com"}
+                                  required
+                                />
+                                {fieldState.error && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )}
+                          />
+                          <Controller
+                            name="phone_number"
+                            control={formUpdate.control}
+                            render={({ field, fieldState }) => (
+                              <Field>
+                                <Label htmlFor={field.name}>Phone Number</Label>
+                                <Input
+                                  {...field}
+                                  type="text"
+                                  placeholder={"+62"}
+                                  aria-invalid={fieldState.invalid}
+                                  required
+                                />
+                                {fieldState.error && (
+                                  <FieldError errors={[fieldState.error]} />
+                                )}
+                              </Field>
+                            )}
+                          />
+                        </FieldGroup>
+                        <DialogFooter className="mt-2">
+                          <DialogClose asChild>
+                            <Button type="button" variant={"default"}>
+                              Cancel
+                            </Button>
+                          </DialogClose>
+                          <Button
+                            className="cursor-pointer"
+                            type="submit"
+                            variant={"destructive"}
+                          >
                             Submit
                           </Button>
                         </DialogFooter>
@@ -366,7 +488,18 @@ export default function PageUsers() {
                           <DropdownMenuContent className="w-40" align="end">
                             <DropdownMenuLabel>Action USERS</DropdownMenuLabel>
                             <DropdownMenuGroup>
-                              <DropdownMenuItem className="cursor-pointer">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedUser(item);
+                                  formUpdate.reset({
+                                    full_name: item?.full_name,
+                                    email: item?.email,
+                                    phone_number: item?.phone_number,
+                                  });
+                                  setModalUpdate(true);
+                                }}
+                                className="cursor-pointer"
+                              >
                                 Update
                               </DropdownMenuItem>
                               <DropdownMenuItem
